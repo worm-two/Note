@@ -123,6 +123,16 @@ cp命令是用于文件的复制，文件个数是增加的，而mv则是对文�
 
 df是用于查看磁盘或分区使用情况的命令，而du命令则是用于按照指定容量单位来查看文件或目录在磁盘中的占用情况
 
+###### ; & && | ||用法
+
+| 符号 | 作用                                                         |
+| ---- | ------------------------------------------------------------ |
+| ;    | 用==;==号隔开每个命令, 每个命令按照从左到右的顺序,顺序执行,彼此之间不关心是否失败,所有命令都会执行 |
+| \|   | 把前一个命令原本要输出到屏幕的信息当作后一个命令的标准输入   |
+| \|\| | 只有在\|\|左边的命令返回假，\|\|右边的命令才会被执行         |
+| &    | &放在启动参数后面表示设置此进程为后台进程                    |
+| &&   | 只有在&&左边的命令返回真，&&右边的命令才会被执行             |
+
 
 
 ### 1.3 网络
@@ -431,15 +441,7 @@ source /etc/init.d/functions
 
 ## 二 核心功能
 
-### 2.1 镜像安装
-
-###### [CentOS](https://juejin.cn/post/7245483735218044983)
-
-###### [Ubuntu](https://blog.csdn.net/abilix_tony/article/details/131339859)
-
-###### Rocky
-
-### 2.2 初始化配置
+### 2.1 初始化配置
 
 #### 静态网络配置
 
@@ -765,11 +767,58 @@ cat /dev/null > /var/spool/mail/root
 
 ```shell
 dnf update
+
+# 不更新内核、不升级操作系统版本
+yum --exclude=kernel* --exclude=centos-release* update
+# 更新内核、升级系统版本
+yum update
 ```
 
 #### 内核参数设置
 
-### 2.3 定时任务
+
+
+#### 磁盘清理
+
+* 无用软件包
+
+```shell
+sudo apt clean
+sudo apt autoclean
+```
+
+* 系统日志
+
+```shell
+sudo du -sh /var/log
+```
+
+* 临时文件
+
+```shell
+sudo rm -rf /tmp/*
+```
+
+* 内核文件
+
+```shell
+apt autoremove
+```
+
+* 目录或文件
+
+```shell
+du -h --max-depth=1 / | sort -hr
+```
+
+* 缓存
+
+```shell
+```
+
+
+
+### 2.2 定时任务
 
 #### 语法
 
@@ -808,108 +857,48 @@ systemctl restart crond
 | ==-==    | 代表连续的时间范围。比如"0 5 * * 1-6 命令"，代表在周一到周六的凌晨5点0分执行命令 |
 | ==*/n==  | 代表每隔多久执行一次。比如"*/10 * * * * 命令"，代表每隔10分钟就执行一遍命令 |
 
-### 2.4 后台任务
+### 2.3 后台任务
 
-### 2.5 软件管理
-
-* yum安装
-* 编译安装
-
-#### Linux工具
-
-* wget
+###### &
 
 ```shell
-yum -y install wget
+# 执行文件
+./test.sh > out.file 2>&1 &
+ 
+# 查看是否在后台运行
+ps -ef|grep test
+ 
+# 后台的程序 需要关闭时，需要kill命令停止
+killall [程序名]
 ```
 
-#### CentOS
+> 1. 方便查看运行日志很,不方便停止
+> 2. ==关闭终端会停止运行==，使用ctrl+c或ctrl+z时进程不会结束
 
-###### rpm
-
-> * 是什么
->
->     RPM(RedHat Package Manager)，RedHat软件包管理工具，类似windows里面的setup.exe 是Linux这系列操作系统里面的打包安装工具.
->
-> * 格式
->
->     * Apache-1.3.23-11.i386.rpm
->         * `apache`是软件名称
->         * `1.3.23-11`是软件的版本号，主版本和此版本
->         * `i386`是软件所运行的硬件平台，Intel 32位处理器的统称
->         * `rpm`文件扩展名，代表RPM包
+###### nohup
 
 ```shell
-# 查询指定安装包
-rpm -qa | grep mysql
+nohup bash test.sh > test.log 2>&1 & 
 
-# 安装软件包
-rpm -ivh mysql 
-
-# 升级软件包
-rpm -Uvh mysql
-
-# 安装软件包不检查依赖
-rpm -ivh --nodeps mysql
-
-# 卸载软件包
-rpm -e mysql
-
-# 卸载软件包时不检查依赖
-rpm -e --nodeps mysql
+nohup sudo bash test.sh > test.log 2>&1 & 
 ```
 
-###### yum
+> 1. 方便查看日志,不方便停止
+> 2. 关闭终端不会停止运行，==使用ctrl+c或ctrl+z时进程会结束==
 
-> ​	YUM(全称为 Yellow dog Updater, Modified)是一个在 Fedora 和 RedHat 以及 CentOS 中的 Shell 前端软件包管理器。基于 RPM 包管理，能够从指定的服务器自动下载 RPM 包 并且安装，可以自动处理依赖性关系，并且一次安装所有依赖的软件包，无须繁琐地一次 次下载、安装，
-
-| 参数         | 功能                        |
-| ------------ | --------------------------- |
-| install      | 安装rpm软件包               |
-| update       | 更新rpm软件包               |
-| check-update | 检查是否有可用的更新rpm软件 |
-| remove       | 删除指定的rpm软件           |
-| list         | 显示软件包信息              |
-| clean        | 清理yum过期的缓             |
-| deplist      | 显示yum软件包的所有依赖关   |
-
-```shell
-# 列出所有仓库
-yum repolist all
-
-# 列出仓库中所有软件包
-yum list all
-
-# 安装软件
-yum -y install firefox
-
-# 升级软件包
-yum update firefox
-
-# 移除软件包
-yum remove firefox
-
-# 清除所有仓库缓存
-yum clean all
-```
-
-* 更新脚本
-
-```shell
-# 不更新内核、不升级操作系统版本
-yum --exclude=kernel* --exclude=centos-release* update
-# 更新内核、升级系统版本
-yum update
-
-```
-
-### 2.6 OpenSSL
+###### screen
 
 
 
+###### systemctl
 
 
-### 2.7 自定义服务
+
+### 2.4 OpenSSL
+
+
+
+### 2.5 自定义服务
 
 #### 编写服务
 
@@ -983,7 +972,7 @@ systemctl daemon-reload
 * systemctl执行脚本时需要知道脚本的解释器
 * 目标目录的执行权限不够
 
-### 2.8 环境变量
+### 2.6 环境变量
 
 ###### 图解环境变量
 
@@ -1016,39 +1005,47 @@ systemctl daemon-reload
 1. 配置文件中存在同名环境变量，后面的变量会覆盖前面的变量
 2. 最好在.bashrc 中最后一行添加一句 source /etc/profile,否则可能在重启机器时，出现之前配置的环境变量又失效了的问题
 
-### 2.9 文件输出
+### 2.7 重定向
 
+| 分类                               | 说明                                      |
+| ---------------------------------- | ----------------------------------------- |
+| 标准输入重定向(STDIN,文件描述符0)  | 默认从键盘数据,可以从从其他文件或命令数据 |
+| 标准输出重定向(STDOUT,文件描述符1) | 默认输出到屏幕                            |
+| 标准输入重定向(STDERR,文件描述符2) | 默认输出到屏幕                            |
 
+###### 输入重定向
 
-### 3.10 垃圾清理
+| 符号                   | 作用                                            |
+| ---------------------- | ----------------------------------------------- |
+| 命令 < 文件            | 将文件作为命令的标准输入                        |
+| 命令 << 分界符         | 从标准输入中读入，直到遇见分界符才停止          |
+| 命令 < 文件 1 > 文件 2 | 将文件 1 作为命令的标准输入并将标准输出到文件 2 |
 
+###### 输出重定向
 
+| 符号                                  | 作用                                                         |
+| ------------------------------------- | ------------------------------------------------------------ |
+| 命令 > 文件                           | 将标准输出重定向到一个文件中（清空原有文件的数据）           |
+| 命令 2> 文件                          | 将错误输出重定向到一个文件中（清空原有文件的数据）           |
+| 命令 >> 文件                          | 将标准输出重定向到一个文件中（追加到原有内容的后面）         |
+| 命令 2>> 文件                         | 将错误输出重定向到一个文件中（追加到原有内容的后面）         |
+| ==命令 >> 文件 2>&1== `命令 &>> 文件` | 将标准输出与错误输出共同写入到文件中（追加到原有内容的后面） |
 
-### 3.11 正则表达式
+###### 管道符
 
-#### 特殊字符
+把前一个命令原本要输出到屏幕的信息当作后一个命令的标准输入
 
-| 符号  | 功能                                                      | 实例                  |
-| ----- | --------------------------------------------------------- | --------------------- |
-| ==^== | `匹配开头行`                                              | **^a(以a开头)**       |
-| ==$== | `匹配结尾行`                                              | **t$(以t结尾)**       |
-| ==.== | `匹配任意一个字符`                                        | **r..t(如root)**      |
-| ==*== | `不单独使用，和上一个字符连用，表示匹配上一个字符0次或多` | **ro*t(如roooot,rt)** |
+###### 通配符
 
-#### 字符区间
-
-| 符号 | 功能                   | 实例                                               |
-| ---- | ---------------------- | -------------------------------------------------- |
-| []   | 配置指定范围的一个字符 | [6,8] (匹配6或8),[0-9] (匹配uige0到9的字符),[0-9]* |
-| \    | 表示转移               | 'a\\$b'(匹配a$b)                                   |
-
-
+| 符号  | 功能                   |
+| ----- | ---------------------- |
+| ==*== | 任意字符               |
+| ?     | 单个任意字符           |
+| []    | 配置指定范围的一个字符 |
 
 
 
 ## 三 Vim使用
-
-
 
 ### 一般模式
 
@@ -1659,6 +1656,54 @@ uname -r
 uname -i
 ```
 
+###### lscpu
+
+* (list the CPU architecture)显示CPU架构信息。scpu命令会从/proc/cpuinfo 文件中收集有关本机CPU架构的信息，并整理成易读的格式输出到Shell终端
+
+```shel
+# 显示有关 CPU 架构的信息
+lscpu
+```
+
+###### hwclock
+
+* (hardware clock)显示与设置系统硬件时钟。可以显示当前时间、设置系统硬件时钟与系统时钟的同步。系统硬件时钟是指电脑主板上的时钟信息，通常会被写入BIOS，而系统时钟则是指内核中的时钟信息。Linux 系统在启动时会由内核读取系统硬件时钟的信息，随后系统时钟便独立运作，Linux相关函数及指令都会依据该时间工作
+
+```shell
+# 显示当前系统硬件时钟
+hwclock
+
+# 同步系统硬件时钟与系统时钟
+hwclock --systohc
+
+# 显示系统硬件时钟及版本信息
+hwclock --version
+```
+
+###### sysctl
+
+* (system control)配置系统内核参数
+
+```shell
+# 查看系统中所有内核参数变量和值
+sysctl -a
+
+# 读取一个指定系统内核参数变量的值
+sysctl dev.cdrom.debug
+
+# 修改一个指定系统内核参数变量的值
+sysctl dev.cdrom.debug=1
+```
+
+###### arch
+
+* 显示主机硬件架构类型
+
+```shell
+# 显示当前主机硬件的架构类型
+arch
+```
+
 
 
 ### 1.2 内存
@@ -1668,6 +1713,42 @@ uname -i
 * 将数据由内存同步到硬盘
 
 > ​	Linux 系统中为了提高磁盘的读写效率，对磁盘采取了 "预读迟写"操作方式。当用户保存文件时，Linux 核心并不一定立即将保存数据写入物理磁盘中，而是将数据保存在缓冲区中，等缓冲区满时再写入磁盘，这种方式可以极大的提高磁盘写入数据的效率。但是也带来了安全隐患，如果数据还未写入磁盘时，系统掉电或者其他严重问题出现，则将导致数据丢失。使用sync指令可以立即将缓冲区的数据写入磁盘
+
+###### free
+
+* free 命令的功能是显示系统内存使用量情况，包含物理内存和交换内存的总量、使用量、空闲量情况
+
+```shell
+# 以默认的容量单位显示内存使用量信息
+free
+
+# 以 MB 为单位显示内存使用量信息
+free -m
+
+# 以易读的单位显示内存使用量信息
+free -h
+
+# 以易读的单位显示内存使用量信息，每隔 10s 刷新一次
+free -hs 10
+```
+
+###### swapon
+
+* 是激活交换(swap)分区。交换分区是一种在服务器物理内存不够的情况下，将内存中暂时不用的数据临时存放到硬盘空间的技术，目的是让物理内存一直保持高效，总是在处理重要数据
+
+```shel
+# 查看已有的指定交换分区的信息
+swapon -v /dev/mapper/rhel-swap
+
+# 查看当前已有交换分区的使用情况
+swapon -s
+
+# 对指定的交换分区设置优先顺序
+swapon -p 3 /dev/dm-1
+
+# 立即激活所有/etc/fstab 文件中定义过的交换分区
+swapon -a
+```
 
 
 
@@ -1965,6 +2046,127 @@ fstrim -a
 fstrim -a -v
 ```
 
+###### fsck
+
+* (filesystem check)检查与修复文件系统。若系统有过突然断电或磁盘异常的情况，使用fsck命令对文件系统进行检查与修复，以防数据丢失
+
+```shell
+# 检查文件系统是否有损坏
+fsck /dev/sdb
+
+# 强制检查文件系统的损坏情况
+fsck -f /dev/sdb
+```
+
+###### fio
+
+* (flexible I/O tester)对磁盘进行压力测试
+
+```shell
+# 进行随机读取测试
+fio -filename=File -direct=1 -iodepth 1 -thread -rw=read -ioengine= psync -bs=16k -size=10G -numjobs=10 -runtime=100 -group_reporting -name=mytest
+
+# 进行随机写入测试
+fio -filename=File -direct=1 -iodepth 1 -thread -rw=randwrite -ioengine=psync -bs=16k -size=200G -numjobs=30 -runtime=1000 -group_reporting -name=mytest
+
+# 进行顺序写入测试
+fio -filename=File -direct=1 -iodepth 1 -thread -rw=write -ioengine=psync -bs=16k -size=200G -numjobs=30 -runtime=1000 -group_reporting -name=mytest
+```
+
+###### blktrace
+
+* (block trace)分析磁盘I/O负载情况
+
+```shell
+# 分析指定磁盘的 I/O 情况
+blktrace -d /dev/sda
+
+# 设置运行的时间为 30 秒，分析指定磁盘的 I/O 情况
+blktrace -w 30 -d /dev/sda
+
+# 分析指定磁盘的 I/O 情况，并指定输出文件的名称
+blktrace -d /dev/sda -o File
+```
+
+###### partprobe
+
+(partition probe)重读分区表信息。该命令将磁盘分区表变化信息通知给系统内核，请求操作系统重新加载分区表
+
+```shell
+# 重读系统中全部设备的分区表信息
+partprobe
+
+# 重读系统中指定设备的分区表信息
+partprobe /dev/sda
+
+# 查看命令的帮助信息
+partprobe -h
+```
+
+###### showmount
+
+(show mounted disk)显示NFS服务器的共享信息。NFS是一款广泛使用的Linux系统文件共享服务，通常仅需先使showmount命令查看NFS 服务器的共享设备信息，随后使用mount命令远程挂载到本地即可使用，无须密码验证
+
+```shell
+# 获取已经被客户端加载的 NFS 共享目录
+showmount -d 192.168.10.10
+
+# 获取 NFS 服务器的全部共享目录
+showmount -e 192.168.10.10
+```
+
+###### extundelete
+
+* 恢复文件。能够恢复分区中被意外删除的文件。在使用前需要先将要恢复的分区卸载，以防数据被意外覆盖。仅可恢复EXT3与EXT4格式的文件。
+
+```shell
+# 恢复指定分区中的全部文件
+extundelete /dev/sdb --restore-all
+
+# 恢复指定分区中的指定文件
+
+extundelete /dev/sdb --restore-file File.img
+
+# 恢复指定分区中的指定目录
+extundelete /dev/sdb --restore-directory /Dir
+```
+
+###### iostat
+
+* (I/O stat)监视系统I/O设备的使用情况
+
+```shell
+# 每隔 2s 报告一次系统硬盘的使用情况
+iostat -d 2
+
+# 每隔 2s 报告一次指定硬盘的使用情况，总共报告 6 次
+iostat -x vda -d 2 6
+```
+
+###### blkid
+
+* (block ID)显示块设备信息
+
+```shell
+# 显示当前系统中全部的块设备信息(名称、UUID、文件系统类型等)
+blkid
+
+# 显示指定块设备所对应的 UUID 信息
+blkid -s UUID /dev/sda1
+
+# 以列表方式显示当前系统中全部块设备信息
+blkid -o list
+
+# 显示系统中所有块设备的名称信息
+blkid -o device
+
+# 显示系统中所有块设备的文件系统类型信息
+blkid -s TYPE
+
+# 显示系统中所有块设备的 LABEL 信息
+blkid -s LABEL
+```
+
 
 
 ### 1.4 设备
@@ -2015,6 +2217,23 @@ shutdown +5 "System will shutdown after 5 minutes"
 shutdown -c
 ```
 
+#### 蓝牙
+
+###### rfkill
+
+* (radio frequency kill)管理系统中的蓝牙和Wi-Fi设备，是一个内核级别的管理工具
+
+```shell
+# 显示系统中已有的 Wi-Fi 和蓝牙设备信息
+rfkill list
+
+# 关闭指定编码的设备
+rfkill block 0
+
+# 打开指定编码的设备
+rfkill unblock 0
+```
+
 
 
 ## 二 权限命令
@@ -2052,6 +2271,40 @@ groupdel gou
 # 修改用户组名
 groupmod -n xu gou
 ```
+
+###### gpasswd
+
+* (group password)设置管理用户组
+
+```shell
+# 将指定用户加入到 root 管理员用户组
+
+gpasswd -a linuxprobe root
+
+# 将指定用户从 root 管理员用户组中删除
+
+gpasswd -d root linuxprobe
+
+# 为指定用户组设置管理密码
+gpasswd root
+
+# 删除指定用户组中的管理密码
+gpasswd -r root
+```
+
+###### groups
+
+* 显示用户组信息
+
+```shell
+# 显示当前用户所对应的组信息
+groups
+
+# 显示指定用户对应的组信息
+groups root
+```
+
+
 
 ### 2.2 用户
 
@@ -2172,7 +2425,21 @@ id linuxprobe
 
 ###### who
 
+* 查看当前登录用户的信息
+
 ```shell
+# 查看当前登录用户信息
+who
+
+# 查看当前登录用户信息,并加上标题
+who -H
+
+# 查看当前全部的登录用户信息
+who -H -a
+
+# 查看系统的最近启动时间
+who -b
+
 # 显示自身用户名称
 whoami
 
@@ -2209,6 +2476,62 @@ su - root
 # 使用当前用户身份，基于 sudo 命令来执行管理员的重启命令
 sudo reboot
 ```
+
+###### mkpasswd
+
+* (make password)生成用户的新密码。mkpasswd 命令可以生成一个适用于用户的随机的新密码，管理员可以指定随机密码的长度及
+  所含字符的规则
+
+```shell
+# 生成出一个长度为 20 字符的新密码
+mkpasswd -l 20
+
+# 生成出一个含 3 位数字的新密码
+mkpasswd -d 3
+
+# 生成出一个长度为 20 字符、含 5 位大写字母的新密码，并自动为指定用户进行新密码设定
+mkpasswd -C 5 -l 10 | passwd --stdin linuxcool
+```
+
+###### w
+
+(who)显示已登录用户的信息
+
+```shell
+# 显示目前登入系统用户的信息(默认格式)
+w
+
+# 显示目前登入系统用户的信息(不显示头信息)
+w -h
+
+# 显示当前登录用户的来源
+w -f
+```
+
+###### chage
+
+* 设置账号密码的有效期
+
+```shell
+# 显示指定账户当前的设置信息
+change -l root
+
+# 设置指定账户的最长密码使用有效期为100天
+change -M 100 root
+```
+
+###### newusers
+
+* 批量创建或更新用户信息
+
+```shell
+# 批量创建新用户
+newusers users.txt
+```
+
+
+
+
 
 
 
@@ -2311,6 +2634,65 @@ chattr -R +i /Dir
 # 从指定目录移除隐藏属性，递归操作
 chattr -R -i /Dir
 ```
+
+###### lsattr
+
+* (ist attribute)显示文件的隐藏属性。隐藏属性也叫隐藏权限，顾名思义就是用 chattr 命令添加在文件上的隐藏权限属性。这些属性信息用常规的ls命令无法查看，需要使用lsattr命令查看
+
+```shell
+# 查看指定文件的隐藏属
+lsattr File.cfg
+
+# 仅查看指定目录本身的隐藏属性
+lsattr -d /root
+
+# 查看指定目录中全部文件的隐藏属性
+lsattr -a /root
+```
+
+###### restorecon
+
+* (restore config)恢复文件安全上下文。安全上下文是SELinux安全子系统中重要的安全控制策略。在Linux系统中一切都是文件，而SELinux安全子系统中则一切都是对象，所有的文件、系统端口和进程都具备安全上下文策略
+
+```shell
+# 恢复指定文件的安全上下文，并显示过程信息
+restorecon -v /Dir/File.txt
+
+# 恢复指定目录的安全上下文
+restorecon -R /Dir
+```
+
+
+
+###### semanage
+
+* (SELinux manage)查询与修改安全上下文。
+
+```shell
+# 对指定目录和文件添加新的 SELinux 安全上下文
+semanage fcontext -a -t httpd_sys_content_t /Dir/wwwroot
+semanage fcontext -a -t httpd_sys_content_t /Dir/wwwroot/*
+
+# 查询指定服务所对应的 SELinux 域允许端口列表
+semanage port -l | grep http
+
+# 对指定服务所对应的 SELinux 域允许端口列表添加新的值
+semanage port -a -t http_port_t -p tcp 6111
+```
+
+###### getfattr
+
+* 获取文件系统拓展属性信息
+
+```shell
+# 获取指定文件的所有拓展属性值
+getfattr -d test.txt
+
+# 通过正则表达式来获取只当目录下的文件及其拓展属性值
+getfattr -d -m file.* /Dir
+```
+
+
 
 
 
@@ -2433,6 +2815,19 @@ tree -f
 tree -d
 ```
 
+###### chroot
+
+* 切换根目录
+
+```shell
+# 切换到新的根目录路径
+chroot /usr
+```
+
+
+
+
+
 #### 3.2 管理
 
 ###### touch
@@ -2486,6 +2881,15 @@ rm -f *.txt
 
 # 强制清空服务器系统内的所有文件(慎用！！！)
  rm -rf /*
+```
+
+###### unlink
+
+* 删除文件
+
+```shell
+# 删除指定的文件
+unlink test.sh
 ```
 
 ###### mv
@@ -2595,6 +2999,17 @@ cd -P apple-link/
 >
 >   `rm -rf 软链接名`，而不是==rm -rf 软链接名/==,如果使用==rm -rf 软链接名/==删除，会把软链接对应的真实目录下内容删掉
 
+###### readlink
+
+* 找出符号链接所指的位置
+
+```shell
+# 找出符号链接所对应的真是文件的名称
+readlink /dev/cdrom
+```
+
+
+
 ###### file
 
 * 识别文件类型，
@@ -2615,6 +3030,90 @@ file /dev/cdrom
 # 直接查看指定符号链接文件所对应的目标文件的类型
 file -L /dev/cdrom
 ```
+
+###### last
+
+* 显示用户历史登录情况。通过查看系统记录的日志文件内容，可使管理员获知谁曾经或者试图连接过服务器。通过读取系统登录历史日志文件(/var/log/wtmp)并按照用户名、登录终端、来源终端、时间等信息进行划分，可让用户查看系统历史登录情况
+
+```shell
+# 显示近期用户或终端的历史登录情况
+last
+
+# 仅显示最近 3 条历史登录情况，并不显示来源终端信息
+last -n 3 -R
+
+# 显示系统的开关机历史信息，并将来源终端放到最后
+last -x -a
+```
+
+###### nl
+
+* (number of lines)显示文件内容及行号
+
+```shell
+# 显示指定文件的内容及行号信息
+nl File.cfg
+
+
+# 显示指定文件的内容及行号信息，空行也加上行号
+nl -b a File.cfg
+
+# 空行也算一行，并且行号前面自动补 0，统一输出格式后显示指定文件的内容及行号信息
+nl -b a -n rz File.cfg
+```
+
+###### rename
+
+```shell
+# 将当前工作目录下后缀为.cfg的文件,改为以.txt结尾
+rename .cfg .txt *
+# 将当前工作目录下文件名中的小写a改为大写A
+rename a A * 
+```
+
+###### tee
+
+* 读取标准输入的数据,将其转交到标准输出设备中,同时保存成文件
+
+```shell
+# 将用户输入的数据同时写入两个文件
+tee first.txt second.txt
+
+# 将执行命令的结果写入文件
+uptime | tee uptime.txt
+```
+
+###### true
+
+* 重定向清空文件内容
+
+```shell
+# 清空指定文件中的内容
+true > test.sh
+```
+
+###### install
+
+* 复制文件和设置权限属性
+
+```shell
+# 创建指定名称的新目录
+install -d /home/dir
+
+# 复制文件到目录中
+install test.txt /home/dir
+
+# 复制文件到目录中,并设置权限属性
+install -m 644 test.txt /home/dir
+
+# 复制文件并设置所属用户及用户组
+install -o root -g root test.txt
+
+# 复制文件到不存在的目录中,自动创建
+install -D test.txt /home/dir
+```
+
+
 
 
 
@@ -2737,6 +3236,44 @@ tail -f dog.txt
 tail -c 30 File.cfg
 ```
 
+###### hexdump
+
+(hexadecimal dump)以多种进制格式查看文件内容。可以将文件内容转换成ASCII、二进制、八进制、十进制、十六进制格式进行查看
+
+```shell
+# 以十六进制格式查看指定文件的内容
+hexdump File.cfg
+
+# 以十六进制和 ASCII 格式查看指定文件的内容
+hexdump -C File.cfg
+
+# 以十进制格式查看指定文件的内容
+hexdump -d File.cfg
+```
+
+###### tac
+
+* 反向显示文件内容
+
+```shell
+# 反向显示指定的文件的内容
+tac test.sh
+```
+
+###### tailf
+
+* 跟踪输出文件的新内容
+
+```shell
+# 持续跟踪指定输出文件中的最新内容
+tailf test.log
+
+# 持续跟踪指定输出文件最后5行的最新内容
+tailf -n 5 test.log
+```
+
+
+
 
 
 #### 3.4 搜索
@@ -2782,6 +3319,19 @@ locate apple.txt
 ```
 
 ###### whereis
+
+* 显示命令及相关文件的路径位置信息，可用于找到命令(二进制程序)、命令源代码、man 帮助手册等相关文件的路径位置信息
+
+```shell
+# 查找指定命令程序及相关文件所在的位置
+whereis poweroff
+
+# 仅查找指定命令程序文件所在的位置
+whereis -b poweroff
+
+# 仅查找指定命令的帮助文件所在的位置
+whereis -m poweroff
+```
 
 
 
@@ -2898,6 +3448,20 @@ diff --brief File1.txt File2.txt Files File1.txt and File2.txt differ
 diff -c File1.txt File2.txt
 ```
 
+###### sdiff
+
+* 已并排方式合并文件之间的差异
+
+```shell
+# 以文本方式比较两个文件内容的不同
+sdiff -a test1.txt test2.txt
+
+# 以文本方式比较两个文件内容的不同,忽略大小写的差异
+sdiff -i test1.txt test2.txt
+```
+
+
+
 ###### cut
 
 * cut命令从文件的每一行剪切字节、字符和字段并将这些字节、字符和字段输
@@ -2955,6 +3519,44 @@ tr -d [0-9] < File.cfg
 
 # 将指定文件中的多个相邻空行去重后输出内容到终端界面
 tr -s "[\n]" < File.cfg
+```
+
+###### xargs
+
+* (extended arguments)给其他命令传递参数的过滤器。xargs命令能够处理从标准输入或管道符输入的数据，并将其转换成命令参数，也可以将单行或多行输入的文本转换成其他格式。xargs命令默认接收的信息中，空格是默认定界符，所以可以接收包含换行和空白的内容
+
+```shell
+# 默认以空格为定界符，以多行形式输出文件内容，每行显示 3 段内容值
+cat File.cfg | xargs -n 3
+
+# 指定字符X为定界符，默认以单行的形式输出字符串内容
+echo "FirstXSecondXThirdXFourthXFifth" | xargs -dX
+
+# 指定字符 X 为定界符，以多行形式输出文本内容，每行显示两段内容值
+echo "FirstXSecondXThirdXFourthXFifth" | xargs -dX -n 2
+
+# 设定每一次输出信息时，都需要用户手动确认后再显示到终端界面
+echo "FirstXSecondXThirdXFourthXFifth" | xargs -dX -n 2 -p
+
+# 由 xargs 调用要执行的命令，并将结果输出到终端界面
+ls | xargs -t -I{} echo {}
+```
+
+###### paste
+
+* 将两个文件以列对列的方式进行合并(相当于是把两个不同文件的内容粘贴到了一起)形成新的文件
+
+```shell
+# 现有两个文件(File1 和 File2)，对其进行合并操作
+cat paste File1 File2
+
+# 设置合并后内容的分隔符，再进行合并操作
+ paste -d: File1 File2
+ 
+# 设置每个文件内容为一行，再进行合并操作
+paste -s File1 File2
+
+
 ```
 
 
@@ -3158,6 +3760,19 @@ zipinfo -h File.zip
 # 仅显示压缩包内的文件最后修改时间及简要属性信息
 zipinfo -T File.zip
 ```
+
+###### tgz
+
+* 将文件压缩为.tgz格式,.tar.gz和.tgz是完全相同的格式
+
+```shell
+# 将指定的文件进行压缩
+tgz file.tgz test.sh
+```
+
+
+
+
 
 ## 四 网络命令
 
@@ -3480,15 +4095,393 @@ rz -y
 rz -p
 ```
 
+###### tcpdump
+
+* 监听网络流量，是一款数据嗅探工具
+
+```shell
+# 监听指定网络接口的数据包
+tcpdump -i ens160
+
+# 监听指定主机的数据包(主机名)
+tcpdump host linuxcool.com
+
+# 监听指定主机的数据包(IP 地址)
+tcpdump host 192.168.10.10
+
+# 监听指定端口号的数据包，并以文本形式展示
+tcpdump -i any port 80 -A
+```
+
+###### iptables-save
+
+* 保存防火墙策略规则。由于iptables与 firewalld防火墙配置工具的策略默认都是当前生效而重启后失效，因此均需要执行对应的命令进行保存，让已有的防火墙策略在服务器重启后依然可以奏效
+
+```shell
+# 保存防火墙策略规则
+iptables-save
+
+# 保存防火墙策略规则及数据包计数器信息
+iptables-save -c
+
+# 将当前防火墙策略规则信息输出重定向到文件
+iptables-save > File.bak
+
+# 仅保存防火墙策略中指定的表单内容
+iptables-save -t filter
+```
+
+###### iptables
+
+* 管理防火墙策略的命令，同时也是一个基于内核级别的防火墙服务
+
+```shell
+# 显示当前防火墙策略中全部的过滤表信息
+iptables -L
+
+# 显示当前防火墙策略中指定的 NAT 表信息
+iptables -L -t nat
+
+# 禁止指定的远程主机访问本地全部的服务(通通禁止)
+iptables -I INPUT -s 192.168.10.10 -j DROP
+
+# 禁止指定的远程主机访问本地的某个端口，但允许访问其余端口
+iptables -I INPUT -s 192.168.10.10 -p tcp --dport 22 -j DROP
+```
+
+###### firewall-cmd
+
+* 管理防火墙策略，permanent参数表示永久有效
+
+```shell
+# 查看当前防火墙状态
+firewall-cmd --state
+
+# 查看防火墙当前放行端口号列表
+firewall-cmd --zone=public --list-ports
+
+# 重新加载防火墙策略，立即生效
+firewall-cmd --reload
+
+# 查看当前防火墙默认使用的区域名称
+firewall-cmd --get-default-zone
+
+# 设置当前防火墙默认使用的区域名称
+firewall-cmd --set-default-zone=dmz
+
+# 开启紧急模式，随后关闭
+firewall-cmd --panic-on
+firewall-cmd --panic-off
+
+# 设置 8080-8081 为防火墙允许放行的端口号
+firewall-cmd --zone=public --add-port=8080-8081/tcp
+
+# 查看防火墙当前放行端口号列表
+firewall-cmd --zone=public --list-ports
+
+# 查询指定服务的流量是否被防火墙允许放行
+firewall-cmd --zone=public --query-service=ssh
+```
+
+###### ftp
+
+* (file transfer protocol)在本地主机和远程主机之间上传和下载文件，实现两端的通信
+
+```shell
+# 使用匿名模式，连接到指定的远程 FTP 服务器
+ftp 192.168.10.10
+
+# 从 FTP 服务器中下载指定的文件到本地目录
+ftp> get File.txt
+
+# 从本地目录上传文件到 FTP 服务器中
+ftp> put File.txt
+
+# 查看 FTP 服务的帮助信息
+ftp> help
+
+# 查看 FTP 服务器中的文件列表
+ftp> ls
+
+# 删除 FTP 服务器中的指定文件
+ftp> delete File.txt
+
+# 在 FTP 服务器中创建一个远程目录
+ftp> mkdir linux
+
+# 退出连接
+ftp> quit
+```
+
+###### sftp
+
+* 以加密的形式传输文件
+
+```shell
+# 登录到指定的远程FTP服务器
+sftp 192.168.2.34
+
+# 指定缓存区大小,登录到指定的远程FTP服务器
+sftp -B 192.168.2.34
+
+# 在传输过程中使用压缩技术,登录到指定的远程FTP服务
+sftp -C 192.168.2.34
+```
+
+###### tracepath
+
+* 追踪数据包的路由信息。tracepath命令能够追踪并显示数据包到达目的主机所经过的路由信息以及对应的MTU值
+
+```shell
+# 追踪到达域名的主机路由信息
+tracepath www.linuxcool.com
+
+# 追踪到达域名的主机路由信息，同时显示 IP 地址与主机名
+tracepath -b www.linuxcool.com
+
+# 设置追踪数据包路由的最大 TTL 值为 20，并追踪到达域名的主机路由信息
+tracepath -m 20 www.linuxcool.com
+```
+
+###### keytool
+
+* 管理密钥和证书文件。密钥就是用于加解密的文件或字符串，可以使用keytool命令进行生成、导入和删除等操作。不同的程序需要的密钥格式不尽相同
+
+```shell
+# 生成一个指定名称的证书文件，加密类型为 RSA，有效期365 天
+keytool -genkey -alias tomcat -keyalg RSA -keystore /etc/
+
+# 导入一个指定名称的证书文件，定义别名名称
+ keytool -import -keystore cacerts -storepass 666666 -keypass 888888 -alias linuxcool -file /etc/tomcat.keystore
+
+# 删除一个指定名称的证书
+keytool -delete -alias linuxcool -keystore cacerts -storepass 666666
+```
+
+###### ssh-keygen
+
+* (SSH key generate)生成SSH密钥文件
+
+```shell
+# 创建一个 SSH 密钥文件
+ssh-keygen
+```
+
+###### ssh-keyscan
+
+* 收集主机的SSH公钥信息。Linux 系统管理员通常会先用ssh-keygen命令生成SSH密钥文件，随后用ssh-copy-id命令传送公钥文件到对方主机，而ssh-keysca 命令的作用则是收集主机上的公钥信息，创建和验证sshd服务程序的ssh_known_hosts 文件。ssh-keyscan 命令仅支持SSHv1，在SSHv2中无法使用
+
+```shell
+# 收集主机 SSH 公钥，并输出调试信息
+ssh-keyscan -v 192.168.10.10
+
+# 显示指定主机上的 RSA 密钥信息
+ssh-keyscan 192.168.10.10
+
+# 显示指定主机上的 DSA 密钥信息
+ssh-keyscan -t dsa 192.168.10.10
+
+# 显示调试信息
+ssh-keyscan -v
+```
+
+###### rsync
+
+* (remote sync)远程数据同步。rsync命令能够基于网络快速地实现多台主机间的文件同步工作。与scp或ftp命令会发送完整的文件不同，rsync有独立的文件内容差异算法，会在传送前对两个文件进行比较，只传送两者内容间的差异部分，因此速度更快
+
+```shell
+# 将本地目录(/Dir)与远程目录(192.168.10.10:/Dir)相关联，保持文件同步
+rsync -r /Dir 192.168.10.10:/Dir
+
+# 将远程目录(192.168.10.10:/Dir)与本地目录(/Dir)相关联，保持文件同步
+rsync -r 192.168.10.10:Dir /Dir
+
+# 关联两个本地的目录，保持文件同步
+rsync -r /Dir1 /Dir2
+
+# 列出本地指定目录内的文件列表
+rsync /Dir2/
+
+# 列出远程指定目录内的文件列表
+rsync 192.168.10.10:/Dir/
+```
+
+###### nmtui
+
+* (network manager tui)管理网卡配置参数
+
+```shell
+# 进入网卡参数配置界面
+nmtui
+```
+
+###### nc
+
+* (net cat)扫描与连接指定端口
+
+```shell
+# 扫描指定主机的 80 端口(默认为 TCP)
+nc -nvv 192.168.10.10 80
+
+# 扫描指定主机的 1～1000 端口，指定为 UDP
+nc -u -z -w2 192.168.10.10 1-1000
+
+# 扫描指定主机的 1~100 端口，并显示执行过程
+nc -v -z -w2 192.168.10.10 1-100
+```
+
+###### nmap
+
+* (network mapper:网络映射器)快速扫描互联网、局域网或单一主机上的开放信息，基于原始IP数据包自动分析网络中有哪些主机、主机提供何种服务、服务程序的版本是什么，从而为日常维护和安全审计提供数据支撑。
+
+```shell
+# 扫描目标主机并跟踪路由信息
+nmap --traceroute www.linuxcool.com
+
+# 扫描目标主机上的特定端口号信息
+nmap -p80,443 www.linuxcool.com
+
+# 扫描目标主机上的指定端口号段信息
+nmap -p1-10000 www.linuxcool.com
+
+# 使用高级模式扫描目标主机
+nmap -A www.linuxcool.com
+```
+
+###### nslookup
+
+* (nameserver lookup)查询域名服务器信息
+
+```shell
+# 查询指定域名所对应的 DNS 服务器信息(非交互式)
+nslookup www.linuxcool.com
+
+# 查询指定域名所对应的 DNS 服务器信息(交互式)
+nslookup
+www.linuxcool.com
+
+# 在交互查询模式下，设置仅显示域名的邮件交换记录服务器信息
+nslookup
+>set type=mx
+>www.linuxcool.com
+```
+
+###### arping
+
+* (ARP ping)发送ARP请求数据包
+
+```shell
+# 测试指定主机的存活状态
+arping -f 192.168.10.10
+
+# 向指定主机发送 3 次 ARP 请求数据包
+向指定主机发送 3 次 ARP 请求数据包
+
+# 使用指定网口发送指定次数的 ARP 请求数据包后自动退出命令
+arping -I ens192 -c 2 192.168.10.10
+```
+
+###### host
+
+* 解析域名结果
+
+```shell
+# 查询指定域名所对应的 IP 地址信息(默认模式)
+host www.linuxcool.com
+
+# 查询指定域名所对应的 IP 地址信息(详细模式)
+host -v www.linuxcool.com
+
+# 查询指定域名的 MX 邮件类型记录所对应的 IP 地址信息
+host -t MX linuxcool.com
+```
+
+###### traceroute
+
+* (trace router)追踪网络数据包的传输路径
+
+```shell
+# 追踪本地数据包到指定网站经过的传输路径(默认)
+traceroute www.linuxprobe.com
+
+# 追踪本地数据包到指定网站经过的传输路径，跳数最大为 7 次
+traceroute -m 7 www.linuxprobe.com
+
+# 追踪本地数据包到指定网站经过的传输路径，显示 IP 地址而不是主机名
+traceroute -n www.linuxprobe.com
+
+# 追踪本地数据包到指定网站经过的传输路径，探测包个数为 4 次
+traceroute -q 4 www.linuxprobe.com
+
+# 追踪本地数据包到指定网站经过的传输路径，最长等待时间为 3 秒
+traceroute -w 3 www.linuxprobe.com
+```
+
+###### iptraf
+
+* (IP traffic monitor)实时监视网卡流量。可以用来监视本地网络状况，能够生成网络协议数据包信息、以太网信息、网络节点状态
+  及 IP 校验和错误等重要信息。
+
+```shell
+# 实时监视指定网卡的详细流量状态信息
+iptraf -d eth0
+
+# 实时监视指定网卡的 IP 流量信息
+iptraf -i eth0
+
+# 实时监视指定网卡上的 TCP/UDP 网络流量信息
+iptraf -s eth0
+```
+
+###### vnstat
+
+* 查看网卡流量的使用情况，是一个基于控制台的网络流量监控器
+
+```shell
+# 查询指定网卡的流量使用情况
+vnstat -i eth0
+
+# 更新数据库后查看今天的流量使用情况
+vnstat -d
+
+# 更新数据库后查看本月的流量使用情况
+vnstat -m
+
+# 查看当前实时流量情况
+vnstat -l
+```
+
+###### dig
+
+* (domain information groper)查询域名DNS信息
+
+```shell
+# 查询指定域名所对应的 DNS 信息
+dig www.linuxcool.com
+
+# 查询指定 IP 地址所对应的域名信息(反向查询)
+dig -x 39.98.160.17
+
+# 指定要查询的数据类型(邮件)，查询指定域名所对应的 DNS 信息
+dig -t MX linuxcool.com
+```
+
+###### netplan
+
+* 修改网卡的信息
+
+```shell
+# 获取系统IP信息
+netplan ip
+
+# 显示当前网络计划的版本和可用功能
+netplan info
+
+# 将当前配置应用到正在运行的系统中
+netplan apply
+```
 
 
-
-
-
-
-
-
----
 
 ## 五 进程命令
 
@@ -3781,202 +4774,6 @@ killall mysql
 exit
 ```
 
-###### xargs
-
-* (extended arguments)给其他命令传递参数的过滤器。xargs 命令能够处理从标准输入或管道符输入的数据，并将其转换成命令参数，也可以将单行或多行输入的文本转换成其他格式。xargs命令默认接收的信息中，空格是默认定界符，所以可以接收包含换行和空白的内容
-
-```shell
-# 默认以空格为定界符，以多行形式输出文件内容，每行显示 3 段内容值
-cat File.cfg | xargs -n 3
-
-# 指定字符 X 为定界符，默认以单行的形式输出字符串内容
-echo "FirstXSecondXThirdXFourthXFifth" | xargs -dX
-
-# 指定字符 X 为定界符，以多行形式输出文本内容，每行显示两段内容值
-echo "FirstXSecondXThirdXFourthXFifth" | xargs -dX -n 2
-
-# 设定每一次输出信息时，都需要用户手动确认后再显示到终端界面
-echo "FirstXSecondXThirdXFourthXFifth" | xargs -dX -n 2 -p
-
-# 由 xargs 调用要执行的命令，并将结果输出到终端界面
-ls | xargs -t -I{} echo {}
-```
-
-###### iptables-save
-
-* 保存防火墙策略规则。由于iptables与 firewalld防火墙配置工具的策略默认都是当前生效而重启后失效，因此均需要执行对应的命令进行保存，让已有的防火墙策略在服务器重启后依然可以奏效
-
-```shell
-# 保存防火墙策略规则
-iptables-save
-
-# 保存防火墙策略规则及数据包计数器信息
-iptables-save -c
-
-# 将当前防火墙策略规则信息输出重定向到文件
-iptables-save > File.bak
-
-# 仅保存防火墙策略中指定的表单内容
-iptables-save -t filter
-```
-
-###### iptables
-
-* 管理防火墙策略的命令，同时也是一个基于内核级别的防火墙服务
-
-```shell
-# 显示当前防火墙策略中全部的过滤表信息
-iptables -L
-
-# 显示当前防火墙策略中指定的 NAT 表信息
-iptables -L -t nat
-
-# 禁止指定的远程主机访问本地全部的服务(通通禁止)
-iptables -I INPUT -s 192.168.10.10 -j DROP
-
-# 禁止指定的远程主机访问本地的某个端口，但允许访问其余端口
-iptables -I INPUT -s 192.168.10.10 -p tcp --dport 22 -j DROP
-```
-
-###### firewall-cmd
-
-* 管理防火墙策略，permanent参数表示永久有效
-
-```shell
-# 查看当前防火墙状态
-firewall-cmd --state
-
-# 查看防火墙当前放行端口号列表
-firewall-cmd --zone=public --list-ports
-
-# 重新加载防火墙策略，立即生效
-firewall-cmd --reload
-
-# 查看当前防火墙默认使用的区域名称
-firewall-cmd --get-default-zone
-
-# 设置当前防火墙默认使用的区域名称
-firewall-cmd --set-default-zone=dmz
-
-# 开启紧急模式，随后关闭
-firewall-cmd --panic-on
-firewall-cmd --panic-off
-
-# 设置 8080-8081 为防火墙允许放行的端口号
-firewall-cmd --zone=public --add-port=8080-8081/tcp
-
-# 查看防火墙当前放行端口号列表
-firewall-cmd --zone=public --list-ports
-
-# 查询指定服务的流量是否被防火墙允许放行
-firewall-cmd --zone=public --query-service=ssh
-```
-
-###### free
-
-* free 命令的功能是显示系统内存使用量情况，包含物理内存和交换内存的总量、使用量、空闲量情况
-
-```shell
-# 以默认的容量单位显示内存使用量信息
-free
-
-# 以 MB 为单位显示内存使用量信息
-free -m
-
-# 以易读的单位显示内存使用量信息
-free -h
-
-# 以易读的单位显示内存使用量信息，每隔 10s 刷新一次
-free -hs 10
-```
-
-###### hash
-
-* (hash algorithm)管理命令运行时查询的哈希表
-
-```shell
-# 显示哈希表中的命令
-hash -l
-
-# 删除哈希表中的命令
-hash -r
-
-# 向哈希表中添加命令
-hash -p /usr/sbin/adduser myadduser
-
-# 在哈希表中清除记录
-hash -d
-```
-
-###### fio
-
-* (flexible I/O tester)对磁盘进行压力测试
-
-```shell
-# 进行随机读取测试
-fio -filename=File -direct=1 -iodepth 1 -thread -rw=read -ioengine= psync -bs=16k -size=10G -numjobs=10 -runtime=100 -group_reporting -name=mytest
-
-# 进行随机写入测试
-fio -filename=File -direct=1 -iodepth 1 -thread -rw=randwrite -ioengine=psync -bs=16k -size=200G -numjobs=30 -runtime=1000 -group_reporting -name=mytest
-
-# 进行顺序写入测试
-fio -filename=File -direct=1 -iodepth 1 -thread -rw=write -ioengine=psync -bs=16k -size=200G -numjobs=30 -runtime=1000 -group_reporting -name=mytest
-```
-
-###### tcpdump
-
-* 监听网络流量，是一款数据嗅探工具
-
-```shell
-# 监听指定网络接口的数据包
-tcpdump -i ens160
-
-# 监听指定主机的数据包(主机名)
-tcpdump host linuxcool.com
-
-# 监听指定主机的数据包(IP 地址)
-tcpdump host 192.168.10.10
-
-# 监听指定端口号的数据包，并以文本形式展示
-tcpdump -i any port 80 -A
-```
-
-###### fsck
-
-* (filesystem check)检查与修复文件系统。若系统有过突然断电或磁盘异常的情况，使用fsck命令对文件系统进行检查与修复，以防数据丢失
-
-```shell
-# 检查文件系统是否有损坏
-fsck /dev/sdb
-
-# 强制检查文件系统的损坏情况
-fsck -f /dev/sdb
-```
-
-###### bc
-
-* (binary calculator:二进制计算器)进行数字计算。bash解释器仅能进行整数计算，而不支持浮点数计算
-
-```shell
-# 计算得出指定的浮点数乘法结果
-bc
-1.2345*3
-
-# 设定计算精度为小数点后 3 位，取浮点数除法结果
-bc
-scale=3
-3/8
-
-# 分别计算整数的平方与平方根结果
-bc
-10^10
-sqrt(100)
-```
-
-## 六 管理命令
-
-### 配置文件
-
 ###### env
 
 * (environment)显示和定义环境变量
@@ -4028,11 +4825,598 @@ journalctl -n 10
 journalctl -f
 ```
 
+###### crontab
+
+* (cron table)管理定时计划任务
+
+```shell
+# 管理当前用户的计划任务
+crontab -e
+ 
+# 管理指定用户的计划任务
+crontab -e -u linuxprobe
+
+# 查看当前用户的已有计划任务列表
+crontab -l
+```
+
+###### export
+
+* 变量提升成环境变量
+
+```shell
+# 列出当前系统中所有的环境变量信息
+export -p
+
+# 将指定变量提升成环境变量
+export MYENV
+
+# 定义一个变量并提升成环境变量
+export MYENV=www.linuxcool.com
+```
+
+###### init
+
+* (initialize)切换系统运行级别。init命令是Linux系统中的进程初始化工具，是一切服务程序的父进程，它的进程号永远为1。管理员可以使用init命令对系统运行级别进行自由切换
+
+```shell
+# 关闭服务器
+init 0
+
+# 切换单用户模式
+init 1
+
+# 切换多用户模式
+init 2
+
+# 切换完全多用户模式(常见的文字界面级别)
+init 3
+
+# 切换图形界面模式(常见的图形界面级别)
+init 5
+
+# 重启服务器
+init 6
+```
+
+###### dnf
+
+* (dandified yum)新一代的软件包管理器，其功能是安装、更新、卸载Linux系统中的软件
+
+```shell
+# 安装指定的软件包
+dnf install httpd
+
+# 安装指定的软件包，且无须二次确认
+dnf install httpd -y
+
+# 更新指定的软件包
+dnf update httpd
+
+# 重新安装指定软件包
+dnf reinstall httpd
+
+# 卸载指定的软件包
+dnf remove httpd
+
+# 查询软件仓库中已有软件包列表
+dnf list
+
+# 更新系统中所有的软件包至最新版
+dnf update
+```
+
+###### service
+
+* 管理系统服务
+
+```shell
+# 查看系统中所有服务的状态
+service --status-all
+
+# 查看指定服务的状态
+service sshd status
+
+# 启动指定的服务程序
+service sshd start
+
+# 关闭指定的服务程序
+service sshd stop
+
+# 重启指定的服务程序
+service sshd restart
+```
+
+###### uptime
+
+* 是查看系统负载，显示系统已经运行了多长时间、当前登入用户的数量，以及过去1分钟、5分钟、15分钟内的负载信息
+
+```shell
+# 查看当前系统负载及相关信息
+uptime
+
+# 以更易读的形式显示系统的已运行时间
+uptime -p
+
+# 显示本次系统的开机时间
+uptime -s
+```
+
+###### at
+
+* 设置一次性定时计划任务，以atd守护进程的形式在后台运行。相较于crond周期性计划任务服务程序，at命令的特点
+  就是计划任务具有一次性特征，即一旦设置的计划任务被执行，该任务就会从任务列表库中删除
+
+```shell
+# 查看系统中的等待任务
+at -l
+
+# 删除系统中指定编码为 1 的计划任务
+ at -r 1
+ 
+# 使用计划任务立即执行某指定脚本文件
+at -f File.sh now
+
+# 使用计划任务设置 25 分钟后执行某个指定的脚本文件
+at -f File.sh now+25 min
+
+# 使用计划任务设置今天的 10:11 准时执行某个指定的脚本文件
+at -f File.sh 10:11
+
+# 使用计划任务设置在 2024 年 5 月 18 日准时执行某个脚本文件
+at -f File.sh 05/18/2024
+```
+
+###### pstree
+
+(display a tree of processes)以树状图形式显示进程信息，可帮助管理员更好地了解进程间的关系
+
+```shell
+# 以树状图的形式显示当前系统中的全部进程(默认)
+pstree
+
+# 以更完整、更丰富的信息样式显示每个进程
+pstree -a
+```
+
+###### killall
+
+* 基于服务名关闭一组进程。在使用 kill 命令关闭指定PID的服务时，暂且不说要先用ps命令找到对应的PID才能关闭它，很多服务实际上会发起多个进程对应数个不同PID，用kill命令逐一关闭也是一件麻烦事
+
+```shell
+# 结束指定服务所对应的全部进程
+killall httpd
+
+# 打印所有已知信号列表
+killall -l
+```
+
+###### nice
+
+* 调整进程的优先级，以合理分配系统资源。进程优先级的范围为−20~19，数字越小，优先级越高。
+
+```shell
+# 以优先级为 5 执行指定脚本
+nice -n -5 ./File.sh
+
+# 以最高优先级执行指定脚本
+nice -n -20 ./File.sh
+```
+
+1
+
+###### chkconfig
+
+* (check config)管理服务程序
+
+```shell
+# 列出当前系统中已有的全部服务名称
+chkconfig --list
+
+# 将指定的服务加入开机自启动，重启后默认依然有效
+chkconfig telnet on
+
+# 将指定的服务移除出开机自启动，重启后默认不会运行
+chkconfig telnet off
+
+# 将指定名称的服务程序加入管理列表
+chkconfig --add httpd
+
+# 将指定名称的服务程序移除出管理列表
+
+chkconfig --del httpd
+
+
+```
+
+###### pgrep
+
+* (process global regular expression print)检索进程PID。与pidof命令必须准确输入服务名称不同，pgrep命令通过正则表达式进行检索，因此只需要输入服务名称的一部分即可进行搜索操作
+
+```shell
+# 检索某名称服务所对应的 PID 信息
+pgrep sshd
+
+# 以逗号为间隔符，检索某名称服务所对应的 PID 信息
+pgrep -d , sshd
+
+# 指定发起人名称，检索某名称服务所对应的 PID 信息
+pgrep -u www sshd
+pgrep -u root sshd
+```
+
+
+
+###### watch
+
+* 周期性执行任务命令
+
+```shell
+# 设定每间隔 1s 执行一次指定命令，用于监视系统负载情况
+watch -n 1 uptime
+
+# 默认每间隔 2s 执行一次指定命令，用于监视网络链接情况
+watch "netstat -ant"
+
+# 默认每间隔 2s 执行一次指定命令，用于监视磁盘使用情况，并高亮显示变化信息
+watch -d "df -h"
+
+# 设定每间隔 2min 执行一次指定命令，用于观察文件内容变化情况
+ watch -n 120 "cat File.cfg" 
+```
+
+###### declare
+
+* 声明定义新的变量。使用declare命令创建的变量仅可在当前Shell环境下起作用
+
+```shell
+# 显示当前系统中已定义的全部变量信息
+declare
+
+# 声明定义一个新的变量
+declare URL="www.linuxcool.com"
+
+# 声明定义一个新的变量，其赋值来自运算表达式的结果
+declare -i NUM=100+200
+
+
+# 分别查看两个变量所对应的定义信息
+declare -p URL NUM
+
+# 将指定的变量提升为全局环境变量
+declare -x URL
+```
+
+###### pidof
+
+* (process identifier of)查找服务进程的PID
+
+```shell
+# 查找某个指定服务所对应的进程 PID
+pidof sshd
+
+# 查找多个指定服务所对应的进程 PID
+pidof sshd crond
+
+```
+
+###### vmstat
+
+* (virtual memory statistics)监视系统资源状态。可以查看系统中关于进程、内存、硬盘等资源的运行状态，但无法深入分析
+
+```shell
+# 显示系统整体的资源状态
+vmstat -a
+
+# 显示指定的硬盘分区状态
+vmstat -p /dev/sda1
+
+# 显示内存分配机制信息(SLAB)
+vmstat -m
+
+# 以表格形式显示事件计数器和内存状态
+vmstat -s
+
+# 设置每间隔 1s 刷新显示一次系统整体状态信息
+vmstat 1
+```
+
+###### jobs
+
+* 显示终端后台的作业信息。查看当前系统中终端后台的任务列表及其运行状态，查看任务列表及对应的进程ID
+
+```shell
+# 显示当前后台的作业列表
+jobs
+
+# 显示当前后台的作业列表及进程 ID
+jobs -l
+
+# 仅显示运行的后台作业
+jobs -r
+
+# 仅显示已暂停的后台作业
+jobs -s
+
+# 仅显示上次执行 jobs 命令后状态发生变化的后台作业
+jobs -n
+```
+
+###### dmesg
+
+* (display message)显示开机过程信息。Linux 系统内核会将开机过程信息存储在环形缓冲区(ring buffer)中，随后再写入/var/log/dmesg 文件。
+
+```shell
+# 显示全部的系统开机过程信息
+dmesg
+
+# 显示与指定硬盘设备相关的开机过程信息
+dmesg | grep sda
+
+# 显示与内存相关的开机过程信息
+dmesg | grep memory
+
+# 清空环形缓冲区中已有的日志内容
+dmesg -c
+
+```
+
+###### sar
+
+* (system activity reporter)统计系统的运行状态
+
+```shell
+# 统计 CPU 设备的负载信息，每次间隔 2s，共 3 次
+sar -u 2 3
+
+# 统计硬盘设备的读写信息，每次间隔 2s，共 3 次
+sar -d 2 3
+
+# 统计内存设备的读写信息，每次间隔 2s，共 3 次
+sar -r 2 3
+
+# 统计内存设备的分页使用情况，每次间隔 5s，共 3 次
+sar -B 5 3
+
+# 显示 CPU 利用率情况
+sar -u
+
+# 显示系统负载情况
+
+sar -q
+
+# 显示硬盘 I/O 和传输速率情况
+sar -b
+
+# 显示网卡和网络情况
+sar -n D
+```
+
+###### wait
+
+```shell
+# 等待执行的进程结果并输出返回值
+wait 12345
+```
+
+###### hostname
+
+* 显示和设置系统的主机名
+
+```shell
+# 显示当前系统的主机名
+hostname
+
+# 显示当前系统的IP地址
+hostname -i
+```
+
+###### chrt
+
+* 实时管理进程的优先级策略
+
+```shell
+# 更改指定的进程名称优先级策略
+chrt -f 10 bash
+
+# 更改执行的进程号优先级策略
+chrt -p 10 5566
+```
+
+###### talnet
+
+* 控制远程主机,由于Telnet协议基于明文传输数据,不建议使用此命令
+
+###### pkill
+
+* 根据进程名称杀死指定的进程
+
+```shell
+# 杀死指定名称的进程
+pkill sshd
+```
+
+###### bg
+
+* 将任务放到后台运行
+
+```shell
+# 将指定ID的任务放到后台继续执行
+bg 1
+
+# 执行指定任务,并放到后台执行
+tar zcvf test.tar.gz /temp &
+```
+
+###### screen
+
+* 多重视窗管理程序
+
+```shell
+# 创建新的视窗
+screen
+
+# 创建新的视窗并执行执行的命令
+screen vim test.txt
+
+# 回复指定编号的视窗作业
+screen -r 1517
+
+# 显示已创建的视窗作用列表
+screen ls
+
+# 将指定名称的视窗作业离线
+screen -d myjob
+```
+
+###### fg
+
+* 将任务放到前台执行
+
+```shell
+# 将指定ID的任务放回到前台终端执行
+fg 1
+```
 
 
 
 
-#### 辅助
+
+## 六 管理命令
+
+### 工具
+
+###### bc
+
+* (binary calculator:二进制计算器)进行数字计算。bash解释器仅能进行整数计算，而不支持浮点数计算
+
+```shell
+# 计算得出指定的浮点数乘法结果
+bc
+1.2345*3
+
+# 设定计算精度为小数点后 3 位，取浮点数除法结果
+bc
+scale=3
+3/8
+
+# 分别计算整数的平方与平方根结果
+bc
+10^10
+sqrt(100)
+```
+
+###### hash
+
+* (hash algorithm)管理命令运行时查询的哈希表
+
+```shell
+# 显示哈希表中的命令
+hash -l
+
+# 删除哈希表中的命令
+hash -r
+
+# 向哈希表中添加命令
+hash -p /usr/sbin/adduser myadduser
+
+# 在哈希表中清除记录
+hash -d
+```
+
+###### md5sum
+
+* (MD5 summation)计算文件内容的MD5值，进而比较两个文件是否相同。MD5 值是一个128位的二进制数据，转换成十六进制则是32位。用户可以通过此命令对文件内容进行汇总并计算出一个MD5值，如果有某两个文件的MD5值完全相同，则代表两个文件内容完全相同。文件名称不对计算结果产生影响。
+
+```shell
+# 生成文件 MD5 值
+md5sum File.cfg
+
+# 以文本模式读取文件内容，并生成 MD5 值
+md5sum -t File.cfg
+
+# 以二进制模式读取文件内容，并生成 MD5 值
+md5sum -b File.cfg
+```
+
+###### mail
+
+* 发送和接收邮件
+
+```shell
+# 向指定的邮箱发送信件 ，以单个句号(.)结束邮件
+mail root@linuxprobe.com
+
+# 查看当前用户身份下的邮件信息
+mail
+```
+
+###### bash
+
+* 
+
+```shell
+# 检查脚本语法是否正确
+bash -n test.sh
+
+# 执行脚本并输出执行过程信息
+bash -x test.sh
+```
+
+###### read
+
+* 
+
+```shell
+```
+
+###### exec
+
+* 调用并执行指定的命令,或将前一个命令的输出结果作为后一个命令的标准输入值进行二次处理
+
+```shell
+# 调用并执行执行命令
+exec -c reboot
+```
+
+###### echo
+
+
+
+###### prinft
+
+* 格式化输出信息
+
+```shell
+# 输出指定的字符串内容,中间换行
+printf "firt\nsecond"
+
+# 输出指定的字符串内容,只保留最后两位小数点
+printf "%.2f\n" 123.554585 1505.25584
+
+# 输出指定的字符串,两个内容之间间隔10个字符
+printf "%-10s %s\n" lin chen
+```
+
+###### printenv
+
+* 显示系统环境变量与值
+
+```shell
+# 显示系统中所有的环境变量与值
+printenv
+
+# 显示指定环境变量的值
+printenv LANG
+```
+
+
+
+
+
+
+
+### 辅助
 
 ###### man
 
@@ -4087,7 +5471,6 @@ type cd
 
 # 查看某指定关键字的类型信息
 type if
-原文链接：https://www.linuxcool.com/type
 ```
 
 ###### which
@@ -4109,8 +5492,6 @@ which shutdown poweroff
 ###### reset
 
 * 彻底清屏
-
-
 
 ###### history
 
@@ -4136,11 +5517,21 @@ history -a
 history -c
 ```
 
-1
+###### alias
+
+* 设置命令别名信息。必须使用单引号将原来的命令引起来，防止特殊字符导致错误。并且alias命令的作用只局限于该次登入的操作，若要每次登入都能使用这些命令别名，则可将相应的alias命令存放到bash的初始化文件/etc/bashrc中
+
+```shell
+# 查看系统中已有的命令别名信息
+alias -p
+
+# 新增一个命令别名(lc)，其作用是查看当前目录下文件列表及权限等信息
+alias lc='ls -al'
+```
 
 
 
-#### 时间
+### 时间
 
 ###### date
 
@@ -4169,16 +5560,6 @@ date -d '-1 days ago'
 date -s "2023-06-19 20:52:10
 ```
 
-###### cal
-
-```shell
-# 显示本月日历
-cal
-
-# 显示只从年份日历
-cal 2023
-```
-
 ###### chrony
 
 * chronyc功能是设置时间与时间服务器同步
@@ -4188,386 +5569,9 @@ cal 2023
 chronyc sources -v
 ```
 
-
-
-
-
-
-
-
-
-
-
-#### 证书
-
-###### keytool
-
-* keytool 命令的功能是管理密钥和证书文件。密钥就是用于加解密的文件或字符串，可以使用 keytool 命令进行生成、导入和删除等操作。不同的程序需要的密钥格式不尽相同，需要留意具体的格式
-
-```shell
-# 生成一个指定名称的证书文件，加密类型为 RSA，有效期365 天
-keytool -genkey -alias tomcat -keyalg RSA -keystore /etc/
-
-# 导入一个指定名称的证书文件，定义别名名称
- keytool -import -keystore cacerts -storepass 666666 -keypass 888888 -alias linuxcool -file /etc/tomcat.keystore
-
-# 删除一个指定名称的证书
-keytool -delete -alias linuxcool -keystore cacerts -storepass 666666
-```
-
-###### ssh-keyge
-
-ssh-keygen 命令来自英文词组 SSH key generate 的缩写，其功能是生成 SSH 密钥文件。
-ssh-keygen 命令能够对 SSH 密钥文件进行生成、管理、转换等工作，支持 RSA 和 DSA 两种
-密钥格式
-
-
-
-```shell
-# 创建一个 SSH 密钥文件
-ssh-keygen
-
-
-# 
-
-
-
-```
-
-###### ssh-keyscan
-
-ssh-keyscan 命令的功能是收集主机的 SSH 公钥信息。Linux 系统管理员通常会先用
-ssh-keygen 命令生成 SSH 密钥文件，随后用 ssh-copy-id 命令传送公钥文件到对方主机，而
-ssh-keyscan 命令的作用则是收集主机上的公钥信息，创建和验证 sshd 服务程序的
-ssh_known_hosts 文件。ssh-keyscan 命令仅支持 SSHv1，在 SSHv2 中无法使用
-
-
-
-```shell
-# 收集主机 SSH 公钥，并输出调试信息
-ssh-keyscan -v 192.168.10.10
-
-# 显示指定主机上的 RSA 密钥信息
-ssh-keyscan 192.168.10.10
-
-# 显示指定主机上的 DSA 密钥信息
-ssh-keyscan -t dsa 192.168.10.10
-
-# 显示调试信息
-ssh-keyscan -v
-
-
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### 蓝牙
-
-###### rfkill
-
-* rfkill 命令来自英文词组 radio frequency kill 的缩写，其功能是管理系统中的蓝牙和 Wi-Fi
-  设备，是一个内核级别的管理工具
-
-```shell
-# 显示系统中已有的 Wi-Fi 和蓝牙设备信息
-rfkill list
-
-# 关闭指定编码的设备
-rfkill block 0
-
-# 打开指定编码的设备
-rfkill unblock 0
-
-
-
-
-```
-
-#### 定时任务
-
-###### crontab
-
-* crontab 命令来自英文词组 cron table 的缩写，其功能是管理定时计划任务。定时计划任务，顾名思义就是计划好的任务，到了时间就会自动执行。在 Linux 系统中，crond 是一个定时计划任务服务，用户只要能够按照正确的格式(分、时、日、月、星期、命令)写入配置文件，那么就会按照预定的周期时间自动执行，而 crontab 命令则是用于配置定时计划任务的工具名称
-
-```shell
-# 管理当前用户的计划任务
-crontab -e
- 
-# 管理指定用户的计划任务
-crontab -e -u linuxprobe
-
-# 查看当前用户的已有计划任务列表
-crontab -l
-```
-
-
-
-###### export
-
-export 命令的功能是将变量提升成环境变量，亦可将 Shell 函数输出为环境变量。通常个
-人创建出的变量仅能在自己账户下使用，其他人是无法看到的。若想让每个人都能看到并有
-权利去使用变量值，则需要使用 export 命令进行提升操作
-
-
-
-```shell
-# 列出当前系统中所有的环境变量信息
-export -p
-
-# 将指定变量提升成环境变量
-export MYENV
-
-# 定义一个变量并提升成环境变量
-export MYENV=www.linuxcool.com
-```
-
-
-
-###### ftp
-
-ftp 命令来自英文词组 file transfer protocol(FTP)的缩写，是一个文件传输协议客户端。
-FTP 是当前最常用的文件传输协议之一，而 ftp 命令也是最常用的 FTP 协议客户端，它能够
-用于在本地主机和远程主机之间上传和下载文件，实现两端的通信。
-在登录时匿名 FTP 服务器，使用 anonymous 作为用户名，使用任意的电子邮件作为密码。
-通常，用户只能从匿名 FTP 服务器下载文件，而能上传文件。另外，FTP 使用明文传送用户
-的认证信息，很容易被局域网内的嗅探软件截获，所以使用 ftp 命令时要格外注意
-
-```shell
-# 使用匿名模式，连接到指定的远程 FTP 服务器
-ftp 192.168.10.10
-
-# 从 FTP 服务器中下载指定的文件到本地目录
-ftp> get File.txt
-
-# 从本地目录上传文件到 FTP 服务器中
-ftp> put File.txt
-
-# 查看 FTP 服务的帮助信息
-ftp> help
-
-# 查看 FTP 服务器中的文件列表
-ftp> ls
-
-# 删除 FTP 服务器中的指定文件
-ftp> delete File.txt
-
-# 在 FTP 服务器中创建一个远程目录
-ftp> mkdir linux
-
-# 退出连接
-ftp> quit
-
-```
-
-
-
-###### init
-
-init 命令来自英文单词 initialize 的缩写，其功能是切换系统运行级别。init 命令是 Linux
-系统中的进程初始化工具，是一切服务程序的父进程，它的进程号永远为 1。管理员可以使用
-init 命令对系统运行级别进行自由切换，亦可进行重启、关机等操作
-
-```shell
-# 关闭服务器
-init 0
-
-# 切换单用户模式
-init 1
-
-# 切换多用户模式
-init 2
-
-# 切换完全多用户模式(常见的文字界面级别)
-init 3
-
-# 切换图形界面模式(常见的图形界面级别)
-init 5
-
-# 重启服务器
-init 6
-
-
-
-
-```
-
-
-
-###### whereis
-
-whereis 命令的功能是显示命令及相关文件的路径位置信息，可用于找到命令(二进制程
-序)、命令源代码、man 帮助手册等相关文件的路径位置信息，帮助我们更好地管理这些文件。
-有别于 find 命令进行的全盘搜索，whereis 命令的查找速度非常快，因为它不是在磁盘中
-乱找，而是在指定数据库中查询，该数据库是 Linux 系统自动创建的，包含本地所有文件的
-信息，每天自动更新一次。但也正因为这样，whereis 命令的搜索结果会不及时，比如刚添加
-的文件可能搜不到，原因就是该数据库文件还没有更新，管理人员需手动执行 updatedb 命令
-进行更新
-
-
-
-```shell
-# 查找指定命令程序及相关文件所在的位置
-whereis poweroff
-
-# 仅查找指定命令程序文件所在的位置
-whereis -b poweroff
-
-# 仅查找指定命令的帮助文件所在的位置
-whereis -m poweroff
-
-
-```
-
-
-
-###### tracepath
-
-tracepath 命令的功能是追踪数据包的路由信息。tracepath 命令能够追踪并显示数据包到
-达目的主机所经过的路由信息，以及对应的 MTU 值
-
-
-
-```shell
-# 追踪到达域名的主机路由信息
-tracepath www.linuxcool.com
-
-# 追踪到达域名的主机路由信息，同时显示 IP 地址与主机名
-tracepath -b www.linuxcool.com
-
-# 设置追踪数据包路由的最大 TTL 值为 20，并追踪到达域名的主机路由信息
-tracepath -m 20 www.linuxcool.com
-
-
-
-
-```
-
-
-
-###### alias
-
-alias 命令来自英文单词 alias，中文译为“别名”，其功能是设置命令别名信息。我们可以
-使用 alias 将一些较长的命令进行简写，往往几十个字符的命令会变成几个字母，从而大大提
-高我们的工作效率。
-必须使用单引号将原来的命令引起来，防止特殊字符导致错误。并且 alias 命令的作用只
-局限于该次登入的操作，若要每次登入都能使用这些命令别名，则可将相应的 alias 命令存放
-到 bash 的初始化文件/etc/bashrc 中
-
-
-
-```shell
-# 查看系统中已有的命令别名信息
-alias -p
-
-# 新增一个命令别名(lc)，其作用是查看当前目录下文件列表及权限等信息
-alias lc='ls -al'
-
-# 
-
-
-```
-
-
-
-###### blktrace
-
-blktrace 命令来自英文词组 block trace 的缩写，其功能是分析磁盘 I/O 负载情况。在查
-看 Linux 系统磁盘的负载情况时，我们一般会使用 iostat 监控工具，其中很重要的参数就
-是 await。await 表示单个 I/O 所需的平均时间，但它同时也包含了 I/O 调度器所消耗的时
-间和硬件所消耗的时间，所以不能作为硬件性能的指标。
-那么，如何才能分辨一个 I/O 从下发到返回的整个时间内，是硬件耗时多还是在 I/O 调度
-耗时多呢？如何查看 I/O 在各个时间段所消耗的时间呢？blktrace 命令在这种场合就能派上用
-场了，因为它能记录 I/O 所经历的各个步骤，从中可以分析是 IO 调度器慢还是硬件响应慢，
-以及它们各自所用的时间
-
-
-
-```shell
-# 分析指定磁盘的 I/O 情况
-blktrace -d /dev/sda
-
-# 设置运行的时间为 30 秒，分析指定磁盘的 I/O 情况
-blktrace -w 30 -d /dev/sda
-
-# 分析指定磁盘的 I/O 情况，并指定输出文件的名称
-blktrace -d /dev/sda -o File
-
-
-```
-
-
-
-###### partprobe
-
-partprobe 命令来自英文词组 partition probe 的缩写，其功能是重读分区表信息。该命令可
-将磁盘分区表变化信息通知给系统内核，请求操作系统重新加载分区表。有时我们在创建或
-删除分区设备后，系统并不会立即生效，这时就需要使用 partprobe 命令在不重启系统的情况
-下重新读取分区表信息，使新设备信息与系统同步
-
-
-
-```shell
-# 重读系统中全部设备的分区表信息
-partprobe
-
-# 重读系统中指定设备的分区表信息
-partprobe /dev/sda
-
-# 查看命令的帮助信息
-partprobe -h
-
-
-
-
-
-```
-
-
-
-###### lsattr
-
-lsattr 命令来自英文词组 list attribute 的缩写，其功能是显示文件的隐藏属性。隐藏属性也
-叫隐藏权限，顾名思义就是用 chattr 命令添加在文件上的隐藏权限属性。这些属性信息用常
-规的 ls 命令无法查看，需要使用 lsattr 命令查看
-
-```shell
-# 查看指定文件的隐藏属
-lsattr File.cfg
-
-# 仅查看指定目录本身的隐藏属性
-lsattr -d /root
-
-# 查看指定目录中全部文件的隐藏属性
-lsattr -a /root
-
-
-
-```
-
-
-
 ###### timedatectl
 
-timedatectl 命令来自英文词组 time date control 的缩写，其功能是设置系统时间与日期。
-与使用 date 命令设置日期时间不同，使用 timedatectl 命令设置过的日期时间信息将被写入系
-统配置文件，从而立即且长期有效，不会随系统重启而失效。该命令还能用来查看系统时间
-与日期，一站式搞定系统时间。
-
-
+* (time date control)设置系统时间与日期。与使用date命令设置日期时间不同，使用 timedatectl 命令设置过的日期时间信息将被写入系统配置文件，从而立即且长期有效，不会随系统重启而失效
 
 ```shell
 # 查看当前系统中的时区、日期、时间等信息
@@ -4587,453 +5591,11 @@ timedatectl list-timezones
 
 # 设置系统时区
 timedatectl set-timezone "Asia/Shanghai"
-
-
-
 ```
-
-
-
-###### hexdump
-
-hexdump 命令来自英文词组 hexadecimal dump 的缩写，其功能是以多种进制格式查看文
-件内容。hexdump 命令是 Linux 系统中一款好用的文件内容查看工具，可以将文件内容转换
-成 ASCII、二进制、八进制、十进制、十六进制格式进行查看，满足各种需求
-
-
-
-```shell
-# 以十六进制格式查看指定文件的内容
-hexdump File.cfg
-
-# 以十六进制和 ASCII 格式查看指定文件的内容
-hexdump -C File.cfg
-
-# 以十进制格式查看指定文件的内容
-hexdump -d File.cfg
-
-
-
-
-
-
-```
-
-
-
-###### stat
-
-stat 命令来自英文单词 status 的缩写，其功能是显示文件的状态信息。在 Linux 系统中，
-每个文件都有 3 个“历史时间”——最后访问时间(ATIME)、最后修改时间(MTIME)、最
-后更改时间(CTIME)，用户可以使用 stat 命令查看到它们，进而判别有没有其他人修改过文
-件内容。
-使用 touch 命令可以轻易修改文件的 ATIME 和 MTIME，因此请勿单纯以文件历史时间
-作为判别系统有无被他人入侵的唯一标准。
-
-
-
-```shell
-# 查看指定文件的状态信息(含 ATIME、MTIME 与 CTIME)
-stat
-
-# 仅查看指定文件的文件系统信息
-stat -f File.cfg
-
-# 以简洁的方式查看指定文件的状态信息
-stat -t File.cfg
-
-
-
-
-```
-
-
-
-###### gpasswd
-
-gpasswd 命令来自英文词组 group password 的缩写，其功能是设置管理用户组。用户可以
-使用 gpasswd 命令对用户组进行充分的管理，例如设置/删除密码、添加/删除组成员、设置组
-管理员/普通成员等，提高日常工作中对用户组的管理效率。
-
-
-
-```shell
-# 将指定用户加入到 root 管理员用户组
-
-gpasswd -a linuxprobe root
-
-# 将指定用户从 root 管理员用户组中删除
-
-gpasswd -d root linuxprobe
-
-# 为指定用户组设置管理密码
-gpasswd root
-
-# 删除指定用户组中的管理密码
-gpasswd -r root
-
-
-
-```
-
-
-
-###### rsync
-
-rsync 命令来自英文词组 remote sync 的缩写，其功能是远程数据同步。rsync 命令能够基
-于网络(包含局域网和互联网)快速地实现多台主机间的文件同步工作。与 scp 或 ftp 命令会
-发送完整的文件不同，rsync 有独立的文件内容差异算法，会在传送前对两个文件进行比较，
-只传送两者内容间的差异部分，因此速度更快
-
-
-
-```shell
-# 将本地目录(/Dir)与远程目录(192.168.10.10:/Dir)相关联，保持文件同步
-rsync -r /Dir 192.168.10.10:/Dir
-
-# 将远程目录(192.168.10.10:/Dir)与本地目录(/Dir)相关联，保持文件同步
-rsync -r 192.168.10.10:Dir /Dir
-
-# 关联两个本地的目录，保持文件同步
-rsync -r /Dir1 /Dir2
-
-# 列出本地指定目录内的文件列表
-rsync /Dir2/
-
-# 列出远程指定目录内的文件列表
-rsync 192.168.10.10:/Dir/
-```
-
-
-
-
-
-###### last
-
-last 命令的功能是显示用户历史登录情况。通过查看系统记录的日志文件内容，可使管理
-员获知谁曾经或者试图连接过服务器。
-通过读取系统登录历史日志文件(/var/log/wtmp)并按照用户名、登录终端、来源终端、
-时间等信息进行划分，可让用户对系统历史登录情况一目了然
-
-
-
-```shell
-# 显示近期用户或终端的历史登录情况
-last
-
-# 仅显示最近 3 条历史登录情况，并不显示来源终端信息
-last -n 3 -R
-
-# 显示系统的开关机历史信息，并将来源终端放到最后
-last -x -a
-
-
-
-```
-
-
-
-###### md5sum
-
-md5sum 命令来自英文词组 MD5 summation 的缩写，其功能是计算文件内容的 MD5
-值，进而比较两个文件是否相同。MD5 值是一个 128 位的二进制数据，转换成十六进制
-则是 32 位。
-用户可以通过此命令对文件内容进行汇总并计算出一个 MD5 值，如果有某两个文件的
-MD5 值完全相同，则代表两个文件内容完全相同。文件名称不对计算结果产生影响。
-
-```shell
-# 生成文件 MD5 值
-md5sum File.cfg
-
-# 以文本模式读取文件内容，并生成 MD5 值
-md5sum -t File.cfg
-
-# 以二进制模式读取文件内容，并生成 MD5 值
-md5sum -b File.cfg
-
-```
-
-
-
-###### mail
-
-mail 命令的功能是发送和接收邮件，是 Linux 系统中重要的电子邮件管理工具，自RHEL 8 /
-CentOS 8 系统起，该命令正式改名为 mailx，而 mail 则作为软链接文件保留
-
-
-
-```shell
-# 向指定的邮箱发送信件 ，以单个句号(.)结束邮件
-mail root@linuxprobe.com
-
-# 查看当前用户身份下的邮件信息
-mail
-
-
-
-
-
-
-```
-
-
-
-###### showmount
-
-showmount 命令来自英文词组 show mounted disk 的缩写，其功能是显示 NFS 服务器的共
-享信息。NFS 是一款广泛使用的 Linux 系统文件共享服务，客户通常仅需先使用 showmount
-命令查看 NFS 服务器的共享设备信息，随后使用 mount 命令远程挂载到本地即可使用，无须
-密码验证
-
-```shell
-# 获取已经被客户端加载的 NFS 共享目录
-showmount -d 192.168.10.10
-
-# 获取 NFS 服务器的全部共享目录
-showmount -e 192.168.10.10
-
-
-
-
-```
-
-
-
-
-
-###### dnf
-
-dnf 命令来自英文词组 dandified yum 的缩写，是新一代的软件包管理器，其功能是安装、
-更新、卸载 Linux 系统中的软件。dnf 最初应用于 Fedora 18 系统中，旨在解决 yum 命令的诸
-多瓶颈，例如占用大量内存、软件依赖关系臃肿、运行速度缓慢等。
-dnf 与 yum 命令的执行格式高度相同，只需要将日常软件包管理操作中的 yum 替换成 dnf
-命令即可。
-
-
-
-```shell
-# 安装指定的软件包
-dnf install httpd
-
-# 安装指定的软件包，且无须二次确认
-dnf install httpd -y
-
-# 更新指定的软件包
-dnf update httpd
-
-# 重新安装指定软件包
-dnf reinstall httpd
-
-# 卸载指定的软件包
-dnf remove httpd
-
-# 查询软件仓库中已有软件包列表
-dnf list
-
-# 更新系统中所有的软件包至最新版
-
-
-```
-
-
-
-###### nmtui
-
-nmtui 命令来自英文词组 network manager tui 的缩写，其功能是管理网卡配置参数。用户
-可以使用 nmtui 命令在终端下调出类图形界面，然后使用方向键和 Enter 键即可进行控制，因
-此对于不会使用 nmcli 命令的新手管理员来讲十分友好。
-
-
-
-```shell
-# 进入网卡参数配置界面
-nmtui
-
-# 
-
-
-
-
-```
-
-
-
-
-
-###### iscsiadm
-
-iscsiadm命令来自英文词组iSCSI administration的缩写，是最常用的iSCSI服务管理工具。
-iscsiadm 是一个命令行工具，能够发现、登录、卸载远程 iSCSI 目标，还能管理 open-iscsi 数
-据库。iSCSI 服务的配置过程较复杂，建议参考《Linux 就该这么学(第 2 版)》的 17.3 节。
-有些时候，服务器可能未安装 iSCSI 服务应用程序，此时需要先安装后使用，如执行 dnf install
-targetcli -y 命令安装。
-
-
-
-```shell
-# 发现远程可用的 iSCSI 服务器节点
-iscsiadm -m discovery -t st -p 192.168.10.10
-
-# 登录远程可用的 iSCSI 服务器节点
-iscsiadm -m node -T iqn.2003-01.org.linux-iscsi.linuxprobe.
-
-# 卸载本地已挂载的指定 iSCSI 存储设备
-iscsiadm -m node -T iqn.2003-01.org.linux-iscsi.linuxprobe.
-x8664:sn.745b21d6cad5 -u
-
-# 卸载本地已挂载的全部 iSCSI 存储设备
-iscsiadm -m node --logoutall=all
-
-# 
-
-```
-
-
-
-
-
-###### nc
-
-nc 命令来自英文词组 net cat 的缩写，其功能是扫描与连接指定端口。nc 命令是一个功能
-丰富的网络实用工具，被誉为网络界的“瑞士军刀”，短小精悍，功能实用。它支持 TCP 和
-UDP 协议，能够基于命令行在网络上读取和写入数据，连接与扫描指定端口号，为用户提供
-无限的潜在用途。
-
-
-
-```shell
-# 扫描指定主机的 80 端口(默认为 TCP)
-nc -nvv 192.168.10.10 80
-
-# 扫描指定主机的 1～1000 端口，指定为 UDP
-nc -u -z -w2 192.168.10.10 1-1000
-
-# 扫描指定主机的 1~100 端口，并显示执行过程
-nc -v -z -w2 192.168.10.10 1-100
-
-
-
-
-```
-
-
-
-
-
-###### service
-
-service 命令的功能是管理系统服务，是早期红帽公司发行的 Linux 系统中最常见的命令
-之一，主要用于 RHEL 7/CentOS 7 版本以前的系统，能够启动、停止、重启或关闭指定服务
-程序，亦能查看服务的运行状态信息。
-
-```shell
-# 查看系统中所有服务的状态
-service --status-all
-
-# 查看指定服务的状态
-service sshd status
-
-# 启动指定的服务程序
-service sshd start
-
-# 关闭指定的服务程序
-service sshd stop
-
-# 重启指定的服务程序
-service sshd restart
-
-
-
-
-
-```
-
-
-
-###### mkpasswd
-
-mkpasswd 命令来自英文词组 make password 的缩写，其功能是生成用户的新密码。
-mkpasswd 命令可以生成一个适用于用户的随机的新密码，管理员可以指定随机密码的长度及
-所含字符的规则。有经验的用户可以结合管道符将新生成的密码直接作用于用户，一条命令
-即可设置好新密码。
-每次生成的随机密码均不同，请在正式设置用户密码前保存好，不要忘记哦！
-
-
-
-```shell
-# 生成出一个长度为 20 字符的新密码
-mkpasswd -l 20
-
-# 生成出一个含 3 位数字的新密码
-mkpasswd -d 3
-
-# 生成出一个长度为 20 字符、含 5 位大写字母的新密码，并自动为指定用户进行新密码设定
-mkpasswd -C 5 -l 10 | passwd --stdin linuxcool
-
-
-
-
-
-```
-
-
-
-###### uptime
-
-uptime 命令的功能是查看系统负载，是 Linux 系统中最常用的命令之一。uptime 命令能
-够显示系统已经运行了多长时间、当前登入用户的数量，以及过去 1 分钟、5 分钟、15 分钟
-内的负载信息。该命令的用法也十分简单，一般不需要加参数，直接输入 uptime 即可。
-
-
-
-```shell
-# 查看当前系统负载及相关信息
-uptime
-
-# 以更易读的形式显示系统的已运行时间
-uptime -p
-
-
-# 显示本次系统的开机时间
-uptime -s
-
-
-```
-
-
-
-###### nmap
-
-nmap 命令来自英文词组 network mapper 的缩写，中文译为“网络映射器”。nmap 是一款
-开放源代码的网络探测和安全审计工具，能够快速扫描互联网、局域网或单一主机上的开放
-信息，基于原始 IP 数据包自动分析网络中有哪些主机、主机提供何种服务、服务程序的版本
-是什么，从而为日常维护和安全审计提供数据支撑。
-除了可帮助管理员了解整个网络情况外，nmap 还能获取目标主机的更深入的信息，例如
-反向域名、操作系统与设备的种类及类型、MAC 网卡地址信息等。
-
-```shell
-# 扫描目标主机并跟踪路由信息
-nmap --traceroute www.linuxcool.com
-
-# 扫描目标主机上的特定端口号信息
-nmap -p80,443 www.linuxcool.com
-
-# 扫描目标主机上的指定端口号段信息
-nmap -p1-10000 www.linuxcool.com
-
-# 使用高级模式扫描目标主机
-nmap -A www.linuxcool.com
-```
-
-
 
 ###### ntpdate
 
-ntpdate 命令来自英文词组 NTP date 的拼写，其功能是设置日期和时间。ntpdate 命令能够
-基于 NTP 设置 Linux 系统的本地日期和时间。通过利用 NTP 服务的时钟过滤器来选择最优方
-案，可大大提高时间的可靠性和精度，让系统时间总是准确无误。
-
-
+(NTP date)设置日期和时间。基于NTP设置Linux系统的本地日期和时间
 
 ```shell
 # 调整日期时钟
@@ -5044,20 +5606,11 @@ ntpdate ntp.aliyun.com
 
 # 仅向指定的 NTP 服务器查询时间，但不进行同步设置
 ntpdate -q ntp.aliyun.com
-
-
-
-
 ```
-
-
 
 ###### cal
 
-cal 命令来自英文单词 calendar 的缩写，中文译为“日历”，其功能是显示系统月历与日
-期信息。该命令简单好用，无须过多介绍，想好需求后参考常用参数即可使用
-
-
+* 显示系统月历与日
 
 ```shell
 # 显示当前月份及对应日期
@@ -5068,1089 +5621,7 @@ cal 2 2025
 
 # 显示最近 3 个月的日历(上个月、当前月、下个月)
 cal -3
-
-
-
-
 ```
-
-
-
-
-
-###### at
-
-at 命令的功能是设置一次性定时计划任务，是 Linux 系统中常用的计划任务工具之一，
-会以 atd 守护进程的形式在后台运行。相较于 crond 周期性计划任务服务程序，at 命令的特点
-就是计划任务具有一次性特征，即一旦设置的计划任务被执行，该任务就会从任务列表库中
-删除，因此常被用于仅需执行一次的工作。
-
-
-
-```shell
-# 查看系统中的等待任务
-at -l
-
-# 删除系统中指定编码为 1 的计划任务
- at -r 1
- 
-# 使用计划任务立即执行某指定脚本文件
-at -f File.sh now
-
-# 使用计划任务设置 25 分钟后执行某个指定的脚本文件
-at -f File.sh now+25 min
-
-# 使用计划任务设置今天的 10:11 准时执行某个指定的脚本文件
-at -f File.sh 10:11
-
-# 使用计划任务设置在 2024 年 5 月 18 日准时执行某个脚本文件
-at -f File.sh 05/18/2024
-
-
-
-```
-
-
-
-
-
-###### lssci
-
-lsscsi 命令来自英文词组 list SCSI 的缩写，其功能是列出 SCSI 设备及属性信息，SCSI 是
-一种常用的小型计算机系统接口。lsscsi 命令可以很方便地帮助管理员区分固态硬盘、SATA
-硬盘和 FC 硬盘
-
-
-
-```shell
-# 列出当前系统中全部 SCSI 设备及属性信息
-lsscsi
-
-# 查看指定编码的设备属性信息
-lsscsi 2:0:0:0
-
-# 查看 SCSI 设备的传输信息
-lsscsi -t
-
-#
-
-
-```
-
-
-
-
-
-###### pstree
-
-pstree 命令来自英文词组 display a tree of processes 的缩写，其功能是以树状图形式显示进
-程信息，可帮助管理员更好地了解进程间的关系。在 Linux 系统中，常用 ps 命令查看进程状
-态信息，但是却无法了解进程之间的依赖关系(比如，哪个是父进程，哪个是子进程)。这些
-信息可通过 pstree 命令进行查看
-
-
-
-```shell
-# 以树状图的形式显示当前系统中的全部进程(默认)
-pstree
-
-# 以更完整、更丰富的信息样式显示每个进程
-pstree -a
-
-
-```
-
-
-
-###### xfs_info
-
-xfs_info 命令来自英文词组 XFS information 的缩写，其功能是查看 XFS 类型设备的详情。
-这是一个超简单的命令，在该命令后直接追加设备的名称，即可看到指定 XFS 设备的详情。
-
-
-
-```shell
-# 查看指定 XFS 设备的详细信息
-xfs_info /dev/vda1
-
-# 查看命令工具自身的版本号
-xfs_info -V
-
-
-
-
-
-
-```
-
-
-
-###### nslookup
-
-nslookup 命令来自英文词组 nameserver lookup 的缩写，其功能是查询域名服务器信息。
-nslookup 命令能够查询指定域名所对应的 DNS 服务器信息(正向解析)，亦可查询指定 DNS
-服务器上所绑定的域名信息(反向解析)。该命令有两种工作方式，其一是交互式，在命令行
-中执行 nslookup 命令后即可进入，是一问一答的查询模式；其二是非交互式，直接在命令后
-追加域名或 IP 地址信息即可进行查询操作
-
-
-
-```shell
-# 查询指定域名所对应的 DNS 服务器信息(非交互式)
-nslookup www.linuxcool.com
-
-# 查询指定域名所对应的 DNS 服务器信息(交互式)
-nslookup
-www.linuxcool.com
-
-# 在交互查询模式下，设置仅显示域名的邮件交换记录服务器信息
-nslookup
->set type=mx
->www.linuxcool.com
-
-
-
-
-
-
-```
-
-
-
-
-
-###### killall
-
-killall 命令的功能是基于服务名关闭一组进程。我们在使用 kill 命令关闭指定 PID 的服务
-时，暂且不说要先用 ps 命令找到对应的 PID 才能关闭它，很多服务实际上会发起多个进程，
-对应数个不同 PID，用 kill 命令逐一关闭也是一件麻烦事。将 ps 和 kill 两个命令的执行过程
-合二为一，就得到了超好用的 killall 命令。管理员只需要给出要关闭的服务名，该命令就能
-自动找到该服务所对应的全部进程信息，并关闭它们。
-
-
-
-```shell
-# 结束指定服务所对应的全部进程
-killall httpd
-
-# 打印所有已知信号列表
-killall -l
-
-
-
-```
-
-
-
-###### arping
-
-arping命令来自英文词组ARP ping的缩写，其功能是发送ARP (Address Resolution Protocol，
-地址解析协议)请求数据包。arping 命令使用 ARP 数据包来测试网络状态，能够判断某个指定
-的 IP 地址是否已在网络上使用，并能够获取更多的设备信息，像是加强版的 ping 命令
-
-```shell
-# 测试指定主机的存活状态
-arping -f 192.168.10.10
-
-# 向指定主机发送 3 次 ARP 请求数据包
-向指定主机发送 3 次 ARP 请求数据包
-
-# 使用指定网口发送指定次数的 ARP 请求数据包后自动退出命令
-arping -I ens192 -c 2 192.168.10.10
-
-
-```
-
-
-
-###### w
-
-w 命令来自英文单词 who 的缩写，其功能是显示已登录用户的信息。运维人员只需在命
-令终端中输入 w 键并按 Enter 键，即可查看当前系统中已登录的用户列表和他们正在执行的
-命令等信息，从而更好地了解系统正在执行的工作，以及等同事都下班后再重启或关闭服务
-器，避免突然中断他人工作
-
-
-
-```shell
-# 显示目前登入系统用户的信息(默认格式)
-w
-
-# 显示目前登入系统用户的信息(不显示头信息)
-w -h
-
-# 显示当前登录用户的来源
-w -f
-
-
-
-```
-
-
-
-###### host
-
-host 命令的功能是解析域名结果，是一个查找 DNS 解析结果的简单程序。将域名转换成
-IP 地址的形式，可帮助运维人员找到指定域名所对应的 IP 地址。
-
-
-
-```shell
-# 查询指定域名所对应的 IP 地址信息(默认模式)
-host www.linuxcool.com
-
-# 查询指定域名所对应的 IP 地址信息(详细模式)
-host -v www.linuxcool.com
-
-# 查询指定域名的 MX 邮件类型记录所对应的 IP 地址信息
-host -t MX linuxcool.com
-
-
-```
-
-
-
-###### traceroute
-
-traceroute 命令来自英文词组 trace router 的拼写，其功能是追踪网络数据包的传输路径。
-执行 tracerouter 命令后会默认发送一个 40 字节大小的数据包到远程目标主机，从远程目标主
-机的反馈信息可以得知数据包经过了哪些路径最终到达终点。
-
-
-
-```shell
-# 追踪本地数据包到指定网站经过的传输路径(默认)
-traceroute www.linuxprobe.com
-
-# 追踪本地数据包到指定网站经过的传输路径，跳数最大为 7 次
-traceroute -m 7 www.linuxprobe.com
-
-# 追踪本地数据包到指定网站经过的传输路径，显示 IP 地址而不是主机名
-traceroute -n www.linuxprobe.com
-
-# 追踪本地数据包到指定网站经过的传输路径，探测包个数为 4 次
-traceroute -q 4 www.linuxprobe.com
-
-# 追踪本地数据包到指定网站经过的传输路径，最长等待时间为 3 秒
-traceroute -w 3 www.linuxprobe.com
-
-
-
-
-
-
-```
-
-
-
-
-
-###### nice
-
-nice 命令的功能是调整进程的优先级，以合理分配系统资源。工作在 Linux 系统后台的
-某些不重要的进程，例如用于定期备份数据、自动清理垃圾等的进程，我们都可以通过 nice
-命令调低其执行优先级，把硬件资源留给更重要的进程。进程优先级的范围为−20~19，数字
-越小，优先级越高。
-
-
-
-```shell
-# 以优先级为 5 执行指定脚本
-nice -n -5 ./File.sh
-
-# 以最高优先级执行指定脚本
-nice -n -20 ./File.sh
-
-
-
-```
-
-
-
-
-
-###### chkconfig
-
-chkconfig 命令来自英文词组 check config 的缩写，其功能是管理服务程序。chkconfig
-命令由红帽公司遵循 GPL 开源协议开发而成，能够用于日常管理服务程序的自启动开启、
-自启动关闭等工作。随着 RHEL 8/CentOS 8 版本系统的发布，该命令功能逐步被 systemctl
-命令替代。
-
-
-
-```shell
-# 列出当前系统中已有的全部服务名称
-chkconfig --list
-
-# 将指定的服务加入开机自启动，重启后默认依然有效
-chkconfig telnet on
-
-# 将指定的服务移除出开机自启动，重启后默认不会运行
-chkconfig telnet off
-
-# 将指定名称的服务程序加入管理列表
-chkconfig --add httpd
-
-# 将指定名称的服务程序移除出管理列表
-
-chkconfig --del httpd
-
-
-```
-
-
-
-
-
-###### pgrep
-
-pgrep 命令来自英文词组 process global regular expression print 的缩写，其功能是检索进程
-PID。与 pidof 命令必须准确输入服务名称不同，pgrep 命令通过正则表达式进行检索，因此用
-户只需要输入服务名称的一部分即可进行搜索操作，在不记得服务程序的全名时特别好用。
-
-
-
-```shell
-# 检索某名称服务所对应的 PID 信息
-pgrep sshd
-
-# 以逗号为间隔符，检索某名称服务所对应的 PID 信息
-pgrep -d , sshd
-
-# 指定发起人名称，检索某名称服务所对应的 PID 信息
-pgrep -u www sshd
-pgrep -u root sshd
-
-```
-
-
-
-###### watch
-
-watch 命令的功能是周期性执行任务命令。watch 命令会以周期性的方式执行指定命令，
-例如每隔几秒钟、几分钟执行一次，并持续关注命令的运行结果，以免运维人员一遍一遍地
-手动运行。
-
-
-
-```shell
-# 设定每间隔 1s 执行一次指定命令，用于监视系统负载情况
-watch -n 1 uptime
-
-# 默认每间隔 2s 执行一次指定命令，用于监视网络链接情况
-watch "netstat -ant"
-
-# 默认每间隔 2s 执行一次指定命令，用于监视磁盘使用情况，并高亮显示变化信息
-watch -d "df -h"
-
-# 设定每间隔 2min 执行一次指定命令，用于观察文件内容变化情况
- watch -n 120 "cat File.cfg" 
-```
-
-
-
-###### declare
-
-declare 命令的功能是用于声明定义新的变量。使用 declare 命令创建的变量仅可在当前
-Shell 环境下起作用，切换 Shell 环境后将无效。要想在其他 Shell 环境下使用，需要将其提升
-为全局环境变量。
-
-
-
-```shell
-# 显示当前系统中已定义的全部变量信息
-declare
-
-
-# 声明定义一个新的变量
-declare URL="www.linuxcool.com"
-
-
-# 声明定义一个新的变量，其赋值来自运算表达式的结果
-declare -i NUM=100+200
-
-
-# 分别查看两个变量所对应的定义信息
-declare -p URL NUM
-
-# 将指定的变量提升为全局环境变量
-declare -x URL
-
-
-```
-
-
-
-###### nl
-
-nl 命令来自英文词组 number of lines 的缩写，其功能是显示文件内容及行号。nl 命令具
-有类似于“cat -n 文件名”的效果，除此之外，还可以对显示的行号格式进行深度定制。
-
-
-
-```shell
-# 显示指定文件的内容及行号信息
-nl File.cfg
-
-
-# 显示指定文件的内容及行号信息，空行也加上行号
-nl -b a File.cfg
-
-# 空行也算一行，并且行号前面自动补 0，统一输出格式后显示指定文件的内容及行号信息
-nl -b a -n rz File.cfg
-
-
-```
-
-
-
-
-
-
-
-###### iptraf
-
-iptraf 命令来自英文词组 IP traffic monitor 的缩写，其功能是实时监视网卡流量。iptraf 命
-令可以用来监视本地网络状况，能够生成网络协议数据包信息、以太网信息、网络节点状态
-及 IP 校验和错误等重要信息。
-
-
-
-```shell
-# 实时监视指定网卡的详细流量状态信息
-iptraf -d eth0
-
-# 实时监视指定网卡的 IP 流量信息
-iptraf -i eth0
-
-# 实时监视指定网卡上的 TCP/UDP 网络流量信息
-iptraf -s eth0
-
-
-
-
-```
-
-
-
-
-
-###### extundelete
-
-extundelete 命令的功能是恢复文件。extundelete 命令能够恢复分区中被意外删除的文件。
-在使用前需要先将要恢复的分区卸载，以防数据被意外覆盖。
-经实测，extundelete 命令仅可恢复 EXT3 与 EXT4 格式的文件。
-
-
-
-```shell
-# 恢复指定分区中的全部文件
-extundelete /dev/sdb --restore-all
-
-# 恢复指定分区中的指定文件
-
-extundelete /dev/sdb --restore-file File.img
-
-# 恢复指定分区中的指定目录
-extundelete /dev/sdb --restore-directory /Dir
-
-
-
-
-
-
-```
-
-
-
-###### vnstat
-
-vnstat 命令的功能是查看网卡流量的使用情况，是一个基于控制台的网络流量监控器。
-vnstat 命令能够以每小时、每天、每月的时间跨度查看 Linux 系统中网卡流量的使用情况。由
-于 vnstat 命令读取的是 proc 目录内系统记录的流量信息，因此即便运维人员没有 root 管理员
-身份，也可以用该命令查看系统流量的统计情况。
-
-
-
-
-
-```shell
-# 查询指定网卡的流量使用情况
-vnstat -i eth0
-
-# 更新数据库后查看今天的流量使用情况
-vnstat -d
-
-# 更新数据库后查看本月的流量使用情况
-vnstat -m
-
-# 查看当前实时流量情况
-vnstat -l
-
-
-```
-
-
-
-
-
-###### pidof
-
-pidof 命令来自英文词组 process identifier of 的缩写，其功能是查找服务进程的 PID。在没
-有 pidof 命令之前，Linux 系统运维人员要想获知一个服务进程的 PID，只得先用 ps 命令遍历
-整个系统的进程状态，再使用 grep 命令进行查找，不仅操作复杂而且效率也低。现在只需要
-在 pidof 命令后加上想查询的服务名称，就会查找到具体信息。
-
-
-
-```shell
-# 查找某个指定服务所对应的进程 PID
-pidof sshd
-
-# 查找多个指定服务所对应的进程 PID
-pidof sshd crond
-
-```
-
-
-
-###### vmstat
-
-vmstat 命令来自英文词组 virtual memory statistics 的缩写，其功能是监视系统资源状态。
-可以使用 vmstat 查看系统中关于进程、内存、硬盘等资源的运行状态，但无法深入分析。vmstat
-命令是一款轻量级的性能查看工具，不会给系统带来什么负担。
-
-
-
-```shell
-# 显示系统整体的资源状态
-vmstat -a
-
-# 显示指定的硬盘分区状态
-vmstat -p /dev/sda1
-
-# 显示内存分配机制信息(SLAB)
-vmstat -m
-
-# 以表格形式显示事件计数器和内存状态
-vmstat -s
-
-# 设置每间隔 1s 刷新显示一次系统整体状态信息
-vmstat 1
-
-
-```
-
-
-
-###### type
-
-type 命令的功能是查看命令类型。如需区分某个命令是 Shell 内部指令还是外部命令，则
-可以使用 type 命令进行查看。
-
-```shell
-# 查看某指定别名命令的类型信息
- type ls
- 
-# 查看某指定 Shell 内部指令的类型信息
-type cd
-
-# 查看某指定关键字的类型信息
-type if
-
-```
-
-
-
-
-
-###### iostat
-
-iostat 命令来自英文词组 I/O stat 的缩写，其功能是监视系统 I/O 设备的使用情况。iostat
-命令能够查看硬盘活动的统计情况，也能显示 CPU 的使用情况，可帮助 Linux 系统运维人员
-进行系统调优。
-
-
-
-```shell
-# 每隔 2s 报告一次系统硬盘的使用情况
-iostat -d 2
-
-# 每隔 2s 报告一次指定硬盘的使用情况，总共报告 6 次
-iostat -x vda -d 2 6
-
-
-
-
-```
-
-
-
-
-
-###### zenity
-
-zenity 命令的功能是显示图形框，可允许运维人员调用各种 Shell 终端的弹窗信息，以查
-看日历、消息，亦可以让用户输入信息或密码进行保存。Zenity 命令的玩法很多，可根据需
-求进行深度开发。
-
-
-
-```shell
-# 显示日历框
-zenity --calendar
-
-# 弹框显示进度栏
-zenity --progress
-
-# 显示密码框
-zenity --password
-
-```
-
-
-
-###### jobs
-
-jobs 命令的功能是显示终端后台的作业信息。可以使用 jobs 命令查看当前系统中终端后
-台的任务列表及其运行状态，查看任务列表及对应的进程 ID，简单方便地了解当前有哪些工
-作正在后台运行。
-
-
-
-```shell
-# 显示当前后台的作业列表
-jobs
-
-# 显示当前后台的作业列表及进程 ID
-jobs -l
-
-# 仅显示运行的后台作业
-jobs -r
-
-# 仅显示已暂停的后台作业
-jobs -s
-
-# 仅显示上次执行 jobs 命令后状态发生变化的后台作业
-jobs -n
-
-```
-
-
-
-###### lscpu
-
-lscpu 命令来自英文词组 list the CPU architecture 的缩写，其功能是显示 CPU 架构信息。
-lscpu 命令会从/proc/cpuinfo 文件中收集有关本机 CPU 架构的信息，并整理成易读的格式输
-出到 Shell 终端，以方便运维人员了解本机 CPU 数量、架构、线程、核心、套接字等重要指
-标信息。
-
-
-
-```shel
-# 显示有关 CPU 架构的信息
-lscpu
-
-# 
-
-
-
-
-```
-
-
-
-###### swapon
-
-swapon 命令的功能是激活交换(swap)分区。交换分区是一种在服务器物理内存不够的
-情况下，将内存中暂时不用的数据临时存放到硬盘空间的技术，目的是让物理内存一直保持
-高效，总是在处理重要数据(与 Windows 系统中 pagefile.sys 虚拟内存文件的作用一样)。
-swapon 命令用于激活 Linux 系统中已存在的交换分区，让交换分区内存可以被立即使用，
-但要想永久生效，还是需要将挂载信息写入/etc/fstab 文件。
-
-
-
-```shel
-# 查看已有的指定交换分区的信息
-swapon -v /dev/mapper/rhel-swap
-
-# 查看当前已有交换分区的使用情况
-swapon -s
-
-# 对指定的交换分区设置优先顺序
-swapon -p 3 /dev/dm-1
-
-# 立即激活所有/etc/fstab 文件中定义过的交换分区
-swapon -a
-
-
-
-
-
-```
-
-
-
-###### paste
-
-paste 命令的功能是合并两个文件。paste 命令能够将两个文件以列对列的方式进行合并
-(相当于是把两个不同文件的内容粘贴到了一起)，形成新的文件。如需先将内容合并成一行，
-再以行粘贴的方式合并，可以使用-s 参数搞定。
-
-
-
-```shell
-# 现有两个文件(File1 和 File2)，对其进行合并操作
-cat paste File1 File2
-
-# 设置合并后内容的分隔符，再进行合并操作
- paste -d: File1 File2
- 
-# 设置每个文件内容为一行，再进行合并操作
-paste -s File1 File2
-
-
-```
-
-
-
-
-
-###### restorecon
-
-restorecon 命令来自英文词组 restore config 的缩写，其功能是恢复文件安全上下文。安全上
-下文是 SELinux 安全子系统中重要的安全控制策略。在 Linux 系统中一切都是文件，而 SELinux
-安全子系统中则一切都是对象，所有的文件、系统端口和进程都具备安全上下文策略。
-一般情况下，使用 cp 命令对文件进行复制操作后，新的文件不会保留原始属性(除非加
-了-p 参数)，此时需要使用 restorecon 命令恢复新文件的安全上下文。此外，使用 semanage
-命令对文件的安全上下文策略进行修改后，如果想让新的安全上下文生效，也需要用到
-restorecon 命令。
-
-
-
-```shell
-# 恢复指定文件的安全上下文，并显示过程信息
-restorecon -v /Dir/File.txt
-
-# 恢复指定目录的安全上下文
-restorecon -R /Dir
-
-
-
-
-
-
-```
-
-
-
-###### semanage
-
-semanage 命令来自英文词组 SELinux manage 的缩写，其功能是查询与修改安全上下文。
-semanage 的功能类似于 chcon 命令，它们都可以用于设置文件的 SELinux 安全上下文策略，
-但 semanage 命令的功能更强大一些，还能够对系统端口、进程等 SELinux 域策略进行查询和
-修改，因此更推荐使用。
-设置过安全上下文后需要使用 restorecon 命令让新设置立即生效。
-
-
-
-```shell
-# 对指定目录和文件添加新的 SELinux 安全上下文
-semanage fcontext -a -t httpd_sys_content_t /Dir/wwwroot
-semanage fcontext -a -t httpd_sys_content_t /Dir/wwwroot/*
-
-# 查询指定服务所对应的 SELinux 域允许端口列表
-semanage port -l | grep http
-
-# 对指定服务所对应的 SELinux 域允许端口列表添加新的值
-semanage port -a -t http_port_t -p tcp 6111
-
-
-
-
-
-```
-
-
-
-
-
-
-
-###### poweroff
-
-poweroff 命令的功能是关闭操作系统。很多读者会着迷于对比 poweroff、halt、shutdown、
-init 0 等命令之间的区别，它们其实都是 Linux 系统中的关机命令，体验上没有区别，更多地
-是依据个人喜好来选择的。
-
-
-
-```shell
-# 关闭操作系统
-poweroff
-
-# 模拟关机操作并记录过程到日志文件(没有真正关机)
-poweroff -w
-
-# 将所有的硬件设置为备用模式，并关闭操作系统
-poweroff -h
-
-
-
-
-```
-
-
-
-###### blkid
-
-blkid 命令来自英文词组 block ID 的缩写，其功能是显示块设备信息。blkid 命令能够查看
-Linux 系统中全部的块设备(也就是我们俗称的硬盘或光盘设备)信息，并可以依据块设备名
-称、文件系统类型、硬盘卷标、UUID 等进行信息检索
-
-
-
-```shell
-# 显示当前系统中全部的块设备信息(名称、UUID、文件系统类型等)
-blkid
-
-# 显示指定块设备所对应的 UUID 信息
-blkid -s UUID /dev/sda1
-
-# 以列表方式显示当前系统中全部块设备信息
-blkid -o list
-
-# 显示系统中所有块设备的名称信息
-blkid -o device
-
-# 显示系统中所有块设备的文件系统类型信息
-blkid -s TYPE
-
-# 显示系统中所有块设备的 LABEL 信息
-blkid -s LABEL
-
-```
-
-
-
-
-
-###### dmesg
-
-dmesg 命令来自英文词组 display message 的缩写，其功能是显示开机过程信息。Linux 系
-统内核会将开机过程信息存储在环形缓冲区(ring buffer)中，随后再写入/var/log/dmesg 文件。
-如果开机时来不及查看这些信息，则可以利用 dmesg 命令进行调取。
-
-
-
-```shell
-# 显示全部的系统开机过程信息
-dmesg
-
-# 显示与指定硬盘设备相关的开机过程信息
-dmesg | grep sda
-
-# 显示与内存相关的开机过程信息
-dmesg | grep memory
-
-# 清空环形缓冲区中已有的日志内容
-dmesg -c
-
-```
-
-
-
-
-
-###### hwclock
-
-
-
-hwclock 命令来自英文词组 hardware clock 的缩写，其功能是显示与设置系统硬件时钟。
-hwclock 是一个硬件时钟管理工具，可以用于显示当前时间、设置系统硬件时钟与系统时钟的
-同步。
-系统硬件时钟是指电脑主板上的时钟信息，通常会被写入 BIOS，而系统时钟则是指内核
-中的时钟信息。Linux 系统在启动时会由内核读取系统硬件时钟的信息，随后系统时钟便独立
-运作，Linux 相关函数及指令都会依据该时间工作。
-
-
-
-```shell
-# 显示当前系统硬件时钟
-hwclock
-
-# 同步系统硬件时钟与系统时钟
-hwclock --systohc
-
-# 显示系统硬件时钟及版本信息
-hwclock --version
-
-# 
-
-
-```
-
-
-
-###### shift
-
-shift 命令的功能是向左移动参数。Linux 命令能够一次性接收多个参数，可能是 0 个、5
-个，也可能是 15 个，那么该如何逐一处理这些参数呢？
-shift 能够将命令接收到的参数逐个向左移动一位，即原本的$3 变量会覆盖$2 变量，原本
-的$2 变量会覆盖$1 变量，这样我们只需每执行一次 shift 命令后调用一次$1 变量，就能够实
-现对全部参数的处理工作了
-
-
-
-```shell
-# 逐一输出在执行 shift 命令后的$1 变量的值，直至清空全部参数
-#!/bin/bash
-while [ $# != 0 ] ; do
-	echo "$1"
-	shift
-done
-
-
-# 执行脚本
-./File.sh AA BB CC DD
-
-```
-
-
-
-
-
-###### sysctl
-
-sysctl 命令来自英文词组 system control 的缩写，其功能是配置系统内核参数。sysctl 命
-令能够在 Linux 系统运行时动态地配置系统内核参数，包含 TCP/IP 堆栈和虚拟内存系统等
-选项，可让有经验的系统管理员更好地优化整台服务器性能，但请注意，配置结果仅在当
-前生效，系统重启后参数将恢复到初始状态，要想永久生效，则需要将参数写入
-/etc/sysctl.conf 系统文件。
-
-
-
-```shell
-# 查看系统中所有内核参数变量和值
-sysctl -a
-
-
-# 读取一个指定系统内核参数变量的值
-sysctl dev.cdrom.debug
-
-# 修改一个指定系统内核参数变量的值
-sysctl dev.cdrom.debug=1
-
-# 
-
-
-```
-
-
-
-
-
-
-
-###### dig
-
-dig 命令来自英文词组 domain information groper 的缩写，其功能是查询域名 DNS 信息。
-dig 命令能够便捷地查询指定域名所对应的 DNS 服务器信息，具有灵活性好易用、输出清晰
-等特点，与 nslookup 命令很相似。
-
-
-
-```shell
-# 查询指定域名所对应的 DNS 信息
-dig www.linuxcool.com
-
-# 查询指定 IP 地址所对应的域名信息(反向查询)
-dig -x 39.98.160.17
-
-# 指定要查询的数据类型(邮件)，查询指定域名所对应的 DNS 信息
-dig -t MX linuxcool.com
-
-
-
-```
-
-
-
-###### sar
-
-sar 命令来自英文词组 system activity reporter 的缩写，其功能是统计系统的运行状态。可
-以使用 sar 命令对 Linux 系统进行取样，且大量的取样数据和分析结果会实时存入文件中，因
-此不会消耗太多的内存和额外的系统资源。
-
-
-
-```shell
-# 统计 CPU 设备的负载信息，每次间隔 2s，共 3 次
-sar -u 2 3
-
-# 统计硬盘设备的读写信息，每次间隔 2s，共 3 次
-sar -d 2 3
-
-# 统计内存设备的读写信息，每次间隔 2s，共 3 次
-sar -r 2 3
-
-# 统计内存设备的分页使用情况，每次间隔 5s，共 3 次
-sar -B 5 3
-
-# 显示 CPU 利用率情况
-sar -u
-
-# 显示系统负载情况
-
-sar -q
-
-# 显示硬盘 I/O 和传输速率情况
-sar -b
-
-# 显示网卡和网络情况
-sar -n DEV
-
-
-
-
-
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
