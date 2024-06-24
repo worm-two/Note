@@ -905,6 +905,90 @@ nohup sudo bash test.sh > test.log 2>&1 & 
 
 ### 2.4 OpenSSL
 
+#### 概述
+
+###### PEM和DER区别
+
+* PEM（Privacy Enhanced Mail）：内容是Base64编码的ASCII码文件，通常用于证书颁发机构（Certificate Authorities，CA），扩展名可为.pem/.crt/.cer/.key。纯文本以"-----BEGIN XXX-----" 和 "-----END XXX-----"作开头和结尾。服务器认证证书，中级认证证书（可理解为公钥）和私钥都可以储存为PEM格式。Apache和类似的服务器使用PEM格式证书
+* DER（Distinguished Encoding Rules）：使用二进制，扩展名为.der，但也经常使用.cer用作扩展名，所有类型的认证证书和私钥都可以存储为DER格式。Java是其典型使用平台
+
+###### 证书相关文件常用扩展名
+
+* CRT ：多用于*NIX系统，多数使用PEM编码，DER编码也有使用
+* CER ：多用于Windows系统，多数使用DER编码，PEM编码也有使用
+* KEY：通常用于存放公钥或者私钥，非X509证书，PEM/DER编码均有
+* CSR（Certificate Signing Request）：证书签名请求，不是证书，用于证书颁发机构申请签名证书，是一个公钥和附加信息，在生成CSR时，还会生成一个私钥
+* PFX/P12（predecessor of PKCS#12）：CRT和KEY存在一个PFX文件中，通常会有一个”提取密码“，用于提取证书内容，使用的DER编码
+* JKS （Java Key Storage）：Java的专利，与OpenSSL关系不大，使用专用工具keytool生成具，可将PFX转为JKS
+
+###### OpenSSL自签名产生SSL证书过程
+
+![image-20240624200309963](./assets/image-20240624200309963.png)
+
+#### 生成证书
+
+###### CA
+
+```shell
+# 生成CA秘钥
+openssl genrsa  -out ca.key 2048
+
+# 生成CA证书请求文件
+openssl req -new -out ca.csr -key ca.key -keyform PEM -subj "/C=CN/ST=江苏省/L=苏州市/O=单位/OU=部门/CN=域名或ip"
+
+# 生成CA自签名 根证书
+openssl x509 -req -days 365 -signkey ca.key -in ca.csr -out ca.crt -CAcreateserial
+```
+
+###### 服务器
+
+```shell
+# 生成server端秘钥
+openssl genrsa  -out server.key 2048 
+
+# 生成server证书请求文件
+openssl req -new -key server.key -out server.csr -subj "/C=CN/ST=江苏省/L=常州市/O=单位/OU=部门/CN=域名或ip"
+
+# 生成自签名SSL证书
+openssl x509 -req -in server.csr -out server.crt  -CA ca.crt -CAkey ca.key -days 365 -CAcreateserial
+```
+
+#### 常用命令
+
+```shell
+# 用openssl命令查看私钥的明细
+openssl rsa -in server.key -noout -text
+
+# 从私钥中导出公钥
+openssl rsa -in server.key -pubout -out publickey.key
+
+# 查看公钥详细
+openssl rsa -pubin -in publickey.key -noout -text
+
+# 查看完整的证书
+openssl x509 -noout -text -in server.crt
+
+# 查看证书序列号
+openssl x509 -in server.crt -noout -serial
+
+# 查看公钥
+openssl x509 -in server.crt -noout -pubkey
+
+# 查看证书有效期
+openssl x509 -enddate -in server.crt -noout
+
+# 使用公钥对明文进行加密
+openssl rsautl -encrypt -pubin -inkey  publickey.key -in hello.txt -out hello_encoded.txt  
+
+# 使用私钥解密
+openssl rsautl -decrypt -inkey server.key -in hello_encoded.txt
+
+# 利用CA校验证书
+openssl verify -CAfile ca.crt server.crt
+
+# 
+```
+
 
 
 
