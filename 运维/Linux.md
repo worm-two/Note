@@ -825,6 +825,29 @@ du -h --max-depth=1 / | sort -hr
 ```shell
 ```
 
+#### sudo不用每次都输入密码
+
+1. 切换目录
+
+```shell
+cd /etc/sudoers.d/
+```
+
+2. 创建文件
+
+```shell
+vim sudoers
+```
+
+```shell
+# sudo ALL=NOPASSWD:ALL
+java ALL=(ALL) NOPASSWD: ALL
+```
+
+
+
+
+
 
 
 ### 2.2 定时任务
